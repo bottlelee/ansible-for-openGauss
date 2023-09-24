@@ -1,0 +1,3 @@
+downloaded_files
+ansible-docker/inventories/opengauss/credentials
+ansible-docker/inventories/opengauss/assembled_vars

@@ -1,0 +1,4 @@
+*.log
+.vagrant
+inventories/vagrant/credentials
+inventories/vagrant/files

@@ -1,0 +1,5 @@
+- name: Deploy openGauss
+  hosts: openGauss
+  become: true
+  roles:
+    - openGauss

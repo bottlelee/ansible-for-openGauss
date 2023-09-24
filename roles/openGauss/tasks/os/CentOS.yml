@@ -1,0 +1,19 @@
+- name: Install epel-release
+  package:
+    name: epel-release
+    
+- name: Install dependencies
+  package:
+    name:
+      - python36
+      - libaio-devel
+      - flex
+      - bison
+      - ncurses-devel
+      - glibc-devel
+      - patch
+      - redhat-lsb-core
+      - readline-devel
+      - nano
+      - htop
+

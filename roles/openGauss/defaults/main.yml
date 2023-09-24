@@ -1,0 +1,41 @@
+---
+# defaults file for openGauss
+openGauss_version: 5.0.0
+
+openGauss_home: /opt/openGauss
+
+openGauss_paths:
+  gaussdbAppPath: "{{ openGauss_home }}/install/app"
+  gaussdbLogPath: "/var/log/openGauss"
+  tmpMppdbPath: "{{ openGauss_home }}/tmp"
+  corePath: "{{ openGauss_home }}/corefile"
+  gaussdbToolPath: "{{ openGauss_home }}/install/om"
+  dataPath: "{{ openGauss_home }}/data"
+
+openGauss_env:
+  user_name: omm
+  user_group: dbgrp
+  user_pass: "{{ lookup('password', inventory_dir + '/credentials/openGauss_omm_pass', chars=['ascii_letters', 'digits']) | password_hash }}"
+  iface_mtu: 8192
+  clusterName: openGauss
+  dataPortBase: 15400
+  cmServerPortBase: 15300
+  cmServerPortStandby: 15500
+  azName: AZ1
+
+openGauss_db_set:
+  locale: en_US.utf8
+  root_pass: "{{ lookup('password', inventory_dir + '/credentials/openGauss_root_pass', chars=['ascii_letters', 'digits'], length=16) }}"
+
+openGauss_sysctl:
+  net.ipv4.tcp_retries1: 5
+  net.ipv4.tcp_syn_retries: 5
+
+openGauss_download:
+  aarch64: 
+    openEuler_22: "https://opengauss.obs.cn-south-1.myhuaweicloud.com/{{ openGauss_version }}/arm_2203/openGauss-{{ openGauss_version }}-openEuler-64bit-all.tar.gz"
+    openEuler_20: "https://opengauss.obs.cn-south-1.myhuaweicloud.com/{{ openGauss_version }}/arm/openGauss-{{ openGauss_version }}-openEuler-64bit-all.tar.gz"
+  x86_64: 
+    openEuler_22: "https://opengauss.obs.cn-south-1.myhuaweicloud.com/{{ openGauss_version }}/x86_openEuler_2203/openGauss-{{ openGauss_version }}-openEuler-64bit-all.tar.gz"
+    openEuler_20: "https://opengauss.obs.cn-south-1.myhuaweicloud.com/{{ openGauss_version }}/x86_openEuler/openGauss-{{ openGauss_version }}-openEuler-64bit-all.tar.gz"
+    CentOS_7:  "https://opengauss.obs.cn-south-1.myhuaweicloud.com/{{ openGauss_version }}/x86/openGauss-{{ openGauss_version }}-CentOS-64bit-all.tar.gz"

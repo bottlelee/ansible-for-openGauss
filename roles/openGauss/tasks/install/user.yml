@@ -1,0 +1,28 @@
+- name: "Create group '{{ og_group }}'"
+  group:
+    name: "{{ og_group }}"
+
+- name: "Create user '{{ og_user }}'"
+  user:
+    name: "{{ og_user }}"
+    group: "{{ og_group }}"
+    shell: "{{ ansible_user_shell }}"
+    password: "{{ og_user_pass }}"
+    update_password: on_create
+
+# - name: Touch user profile
+#   file:
+#     path: "/home/{{ og_user }}/.bashrc"
+#     state: touch
+#     owner: "{{ og_user }}"
+#     group: "{{ og_group }}"
+
+# - name: Create paths
+#   file:
+#     path: "{{ openGauss_home }}/install"
+#     state: directory
+#     owner: "{{ og_user }}"
+#     group: "{{ og_group }}"
+#   # with_dict: "{{ og_paths }}"
+#   # loop_control:
+#   #   label: "{{ item.value }}"
