@@ -1,3 +1,6 @@
+本文内容适合对熟悉 Ansible 的同学看。如果你对 Ansible 不了解，请看 [创建 Ansible 容器](01-ansible-in-docker.md)，使用 docker 快速搭建一个可以运行本项目的 ansible 环境，降低对操作系统的依赖。
+
+
 # hosts.ini 示例
 
 master 组仅可以配置 1 台机器。follower 可以多台。cascade 可选可为空。
