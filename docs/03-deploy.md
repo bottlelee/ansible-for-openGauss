@@ -95,7 +95,6 @@ openGauss_cascade
 192.168.56.19
 
 [openGauss_cascade]
-192.168.56.16
 
 [openGauss:children]
 openGauss_master
