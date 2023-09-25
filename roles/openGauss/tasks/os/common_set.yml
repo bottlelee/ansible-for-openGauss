@@ -1,0 +1,78 @@
+- name: Set hostname
+  hostname:
+    name: "opengauss{{ ansible_loop.index }}"
+  loop: "{{ groups['openGauss'] | sort }}"
+  loop_control:
+    extended: true
+    loop_var: node
+    label: "opengauss{{ ansible_loop.index }}"
+  when: "node == inventory_hostname"
+
+- name: Disable selinux
+  selinux:
+    state: disabled
+  when: "ansible_selinux.status != 'disabled'"
+
+- name: "Set timezone to {{ global_timezone | default('Asia/Shanghai') }}"
+  timezone:
+    name: "{{ global_timezone | default('Asia/Shanghai') }}"
+
+- name: Config /etc/systemd/logind.conf
+  ini_file:
+    path: /etc/systemd/logind.conf
+    section: Login
+    option: RemoveIPC
+    value: 'no'
+
+- name: Config /usr/lib/systemd/system/systemd-logind.service
+  ini_file:
+    path: /usr/lib/systemd/system/systemd-logind.service
+    section: Service
+    option: RemoveIPC
+    value: 'no'
+  register: systemd_logind
+
+- name: Restart systemd-logind.service
+  service:
+    name: systemd-logind
+    state: restarted
+    enabled: true
+  when: "systemd_logind is changed"
+
+- name: Disable history command logs
+  lineinfile:
+    path: /etc/profile
+    line: "HISTSIZE=0"
+    regex: "^HISTSIZE="
+    backup: true
+
+- name: Install dependencies
+  package:
+    name:
+      - bzip2
+      - expect
+      - net-tools
+    state: latest
+    update_cache: true
+
+- name: Config /etc/hosts
+  blockinfile:
+    path: /etc/hosts
+    marker: "# {mark} OPENGAUSS NODES"
+    block: |
+      {% for node in (groups['openGauss'] | sort) %}
+      {{ node }}  opengauss{{ loop.index }} #Gauss OM IP Hosts Mapping
+      {% endfor %}
+
+- name: Get iface name
+  shell: "ip a | grep {{ backIp1 | default(inventory_hostname) }} | awk '{print $NF}'"
+  changed_when: false
+  register: backIface
+
+- name: Set og_back_iface
+  set_fact:
+    og_back_iface: "{{ backIface.stdout | trim }}"
+
+- name: Config MTU on the fly
+  command: "ifconfig {{ og_back_iface }} mtu {{ combined_vars.openGauss_env.iface_mtu }}"
+  changed_when: false

@@ -1,0 +1,19 @@
+- name: Set runtime facts
+  set_fact:
+    og_user: "{{ combined_vars.openGauss_env.user_name }}"
+    og_group: "{{ combined_vars.openGauss_env.user_group }}"
+    og_user_pass: "{{ combined_vars.openGauss_env.user_pass }}"
+    og_home: "{{ combined_vars.openGauss_home }}"
+    og_paths: "{{ combined_vars.openGauss_paths }}"
+    og_pkg_url: "{{ combined_vars.openGauss_download[ansible_architecture][ansible_distribution + '_' + ansible_distribution_major_version] }}"
+    og_ver: "{{ combined_vars.openGauss_version }}"
+    og_ip_list: "{{ groups['openGauss'] | sort | join(',') }}"
+    og_host_list: >-
+      {%- for cm_node in (groups['openGauss'] | sort) -%}      
+        opengauss{{ loop.index }}{{ (loop.nextitem is defined) | ternary(',', '') }}
+      {%- endfor -%}
+    og_hostname: >-
+      {%- for cm_node in (groups['openGauss'] | sort) if cm_node == inventory_hostname -%}      
+        opengauss{{ loop.index }}
+      {%- endfor -%}
+    og_data_path: "{{ combined_vars.openGauss_paths.dataPath }}"
