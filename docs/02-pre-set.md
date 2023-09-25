@@ -71,3 +71,5 @@ combined_vars:
 ```
 
 整个部署任务，都会大量使用 combined_vars 里的变量。
+
+接下来就可以[开始部署](03-deploy.md)
