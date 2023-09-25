@@ -2,7 +2,7 @@
 
 ## 修改 `ansible-docker\inventories\opengauss\hosts.ini` 文件
 
-这个文件是对你要部署的机器，进行一个分组编排，以及 ssh 信息。以 1 主 1 从 1 级联的架构为例，它的内容如下：
+这个文件是对你要部署的机器，进行一个分组编排，以及 ssh 信息填写。以 1 主 1 从 1 级联的架构为例，它的内容如下：
 
 ```
 ; 主服务器组，仅设置 1 个目标机。
@@ -31,8 +31,6 @@ ansible_ssh_user=vagrant
 ansible_ssh_pass=vagrant
 ; ssh 端口
 ansible_ssh_port=22
-; ssh 私钥。如果你的环境没有密钥登录方式，请务必删除以下这行。
-ansible_ssh_private_key_file="~/.vagrant.d/insecure_private_key"
 ```
 
 ## 修改默认运行值。
