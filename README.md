@@ -4,6 +4,15 @@
 
 目前仅支持初次部署，不支持对集群架构做变更。
 
+# 已适配的系统
+
+* x86_64
+  * CentOS 7.6
+
+# 已适配的 openGauss 版本
+
+* 5.0.0
+
 # 优势特点
 
 1. 1 主 4 从 1 级联的架构，十分钟内部署完成（不含安装包的下载时间）。
@@ -38,45 +47,13 @@
         user_group: dbgrp
     ```
 
-# 已匹配系统
+# 使用指南
 
-* x86_64
-  * CentOS 7.6
+* [快速开始](docs/00-how-to.md)，适合熟悉 Ansible 的同学。
+* [创建 Ansible 容器](docs/01-ansible-in-docker.md)，使用 docker 快速搭建一个可以运行本项目的 ansible 环境，降低对操作系统的依赖。
+* [详细配置](docs/02-pre-set.md)
+* [开始部署](docs/03-deploy.md)
 
-# hosts.ini 示例
+# 开发指南
 
-master 组仅可以配置 1 台机器。follower 可以多台。cascade 可选可为空。
-
-```
-[openGauss_master]
-192.168.56.11
-
-[openGauss_follower]
-192.168.56.12
-
-[openGauss_cascade]
-192.168.56.13
-
-[openGauss:children]
-openGauss_master
-openGauss_follower
-openGauss_cascade
-```
-
-# playbook.yml 示例
-
-```
-- name: Deploy openGauss database
-  hosts: openGauss
-  become: true
-  roles:
-    - openGauss
-```
-
-# 效果展示
-
-本地物理机，启动 6 台虚拟机，用时 9 分 30 秒完成 1 主 4 从 1 级联的架构部署。
-
-![用时](roles/openGauss/files/23-09-20_1243_661.png)
-
-![集群状态](roles/openGauss/files/23-09-20_923_628.png)
+（待补充）

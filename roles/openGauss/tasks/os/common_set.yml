@@ -8,11 +8,6 @@
     label: "opengauss{{ ansible_loop.index }}"
   when: "node == inventory_hostname"
 
-# - name: Check MTU through gateway
-#   shell: "ping {{ ansible_default_ipv4.gateway }} -c 2 -M do -s {{ combined_vars.openGauss_env.iface_mtu }} || echo 'skip it'"
-#   changed_when: false
-#   register: mtu_check
-
 - name: Disable selinux
   selinux:
     state: disabled
@@ -68,15 +63,6 @@
       {% for node in (groups['openGauss'] | sort) %}
       {{ node }}  opengauss{{ loop.index }} #Gauss OM IP Hosts Mapping
       {% endfor %}
-
-- name: Config /etc/sysctl.d/50-opengauss.conf
-  sysctl:
-    sysctl_file: /etc/sysctl.d/50-opengauss.conf
-    name: "{{ item.key }}"
-    value: "{{ item.value }}"
-  with_dict: "{{ combined_vars.openGauss_sysctl }}"
-  loop_control:
-    label: "{{ item.key }} = {{ item.value }}"
 
 - name: Get iface name
   shell: "ip a | grep {{ backIp1 | default(inventory_hostname) }} | awk '{print $NF}'"

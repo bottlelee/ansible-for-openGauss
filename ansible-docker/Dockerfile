@@ -1,5 +1,5 @@
 FROM alpine
-MAINTAINER haibin.l@linkingcloud.cn
+LABEL Creator="haibin.l@linkingcloud.cn"
 ARG TIMEZONE="Asia/Shanghai"
 
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.cloud.tencent.com/g' /etc/apk/repositories \
