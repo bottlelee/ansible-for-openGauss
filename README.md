@@ -57,3 +57,7 @@
 # 开发指南
 
 （待补充）
+
+# 问题反馈
+
+请提交 [issue](https://gitee.com/opengauss/ansible-for-opengauss/issues)，或电邮与我联系 haibin.l@linkingcloud.cn

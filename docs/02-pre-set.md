@@ -70,4 +70,8 @@ combined_vars:
 
 整个部署任务，都会大量使用 combined_vars 里的变量。
 
+# 使用自定义的 cluster_config.xml
+
+如果你需要手动定制集群，这里也是支持的，只需要把写好的 `cluster_config.xml` 改名为 `cluster_config.xml.j2`，存放到 `ansible-docker/inventories/opengauss/templates/cluster_config.xml.j2`，部署时会优先使用你的自定义配置。
+
 接下来就可以[开始部署](03-deploy.md)

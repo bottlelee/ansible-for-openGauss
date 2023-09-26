@@ -18,6 +18,19 @@
 
     这里的 `pansible` 是我预置的命令别名，对应的是 `ansible-playbook`。
 
+1. 部署过程中自动生成的公私钥，以及账号密码，存放在 `ansible-docker/inventories/opengauss/credentials`
+
+    ```
+    ls -l ansible-docker/inventories/opengauss/credentials/ 
+    total 24
+    -rw------- 1 root root  387  9月24日 14:24 openGauss_id_om
+    -rw-r--r-- 1 root root   82  9月24日 14:24 openGauss_id_om.pub
+    -rw------- 1 root root 3357  9月24日 14:24 openGauss_id_rsa
+    -rw-r--r-- 1 root root  726  9月24日 14:24 openGauss_id_rsa.pub
+    -rw------- 1 root root   21  9月24日 13:36 openGauss_omm_pass
+    -rw------- 1 root root   17  9月24日 13:36 openGauss_root_pass    
+    ```
+
 # 顺利部署后，你可看到一下输出内容
 
 ## 单节点

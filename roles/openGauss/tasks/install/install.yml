@@ -7,7 +7,7 @@
     backup: true
     lstrip_blocks: true
   with_first_found:
-    - "{{ inventory_dir }}/templates/openGauss/cluster_config.xml.j2"
+    - "{{ inventory_dir }}/templates/cluster_config.xml.j2"
     - "cluster_config.xml.j2"
 
 - name: Starting pre install
