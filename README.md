@@ -51,6 +51,7 @@
 * [创建 Ansible 容器](docs/01-ansible-in-docker.md)，使用 docker 快速搭建一个可以运行本项目的 ansible 环境，降低对操作系统的依赖。
 * [详细配置](docs/02-pre-set.md)
 * [开始部署](docs/03-deploy.md)
+* [节点扩容](docs/04-expansion.md)
 
 # 更新日志
 
