@@ -39,7 +39,15 @@ openGauss_sysctl:
   net.ipv4.tcp_retries1: 5
   net.ipv4.tcp_syn_retries: 5
   net.ipv4.tcp_synack_retries: 5
-  net.ipv4.tcp_fin_timeout: 60
+  # net.ipv4.tcp_fin_timeout: 60
+  # net.ipv4.tcp_max_tw_buckets: 10000
+  # net.ipv4.tcp_tw_reuse: 1
+  # net.ipv4.tcp_tw_recycle: 1
+  # net.ipv4.tcp_keepalive_time: 30
+  # net.ipv4.tcp_keepalive_intvl: 30
+  # net.ipv4.tcp_retries2: 12
+  # net.core.wmem_max: 21299200
+  # net.core.rmem_max: 21299200
 
 # 安装包的下载链接。按 CPU 架构、操作系统及版本做区分。例如 openEuler_22 表示是针对 openEuler 22.03 版本的下载链接。
 openGauss_download:
@@ -50,3 +58,6 @@ openGauss_download:
     openEuler_22: "https://opengauss.obs.cn-south-1.myhuaweicloud.com/{{ openGauss_version }}/x86_openEuler_2203/openGauss-{{ openGauss_version }}-openEuler-64bit-all.tar.gz"
     openEuler_20: "https://opengauss.obs.cn-south-1.myhuaweicloud.com/{{ openGauss_version }}/x86_openEuler/openGauss-{{ openGauss_version }}-openEuler-64bit-all.tar.gz"
     CentOS_7:  "https://opengauss.obs.cn-south-1.myhuaweicloud.com/{{ openGauss_version }}/x86/openGauss-{{ openGauss_version }}-CentOS-64bit-all.tar.gz"
+
+# 初始化 og_expansion 值
+og_expansion: false

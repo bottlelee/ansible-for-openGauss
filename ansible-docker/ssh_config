@@ -1,0 +1,10 @@
+Host *
+    TCPKeepAlive yes
+    ServerAliveInterval 5
+    AddKeysToAgent yes
+    Compression yes
+    ConnectionAttempts 3
+    ConnectTimeout 5
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+    ControlPersist 4h

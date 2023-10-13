@@ -24,9 +24,10 @@ openGauss_cascade
 # playbook.yml 示例
 
 ```
-- name: Deploy openGauss database
+- name: Deploy openGauss
   hosts: openGauss
   become: true
+  become_flags: "-i"
   roles:
     - openGauss
 ```

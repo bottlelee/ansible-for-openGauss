@@ -1,5 +1,6 @@
 - name: Deploy openGauss
   hosts: openGauss
   become: true
+  become_flags: "-i"
   roles:
     - openGauss

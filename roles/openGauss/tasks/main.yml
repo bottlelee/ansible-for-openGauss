@@ -10,83 +10,55 @@
 
     - name: Set runtime facts
       import_tasks: runtime_facts.yml
-
-    - name: Config /etc/sysctl.d/50-opengauss.conf
-      sysctl:
-        sysctl_file: /etc/sysctl.d/50-opengauss.conf
-        name: "{{ sysctl.key }}"
-        value: "{{ sysctl.value }}"
-      with_dict: "{{ combined_vars.openGauss_sysctl }}"
-      loop_control:
-        label: "{{ sysctl.key }} = {{ sysctl.value }}"
-        loop_var: sysctl
   tags: always
 
-- name: Deploy openGauss
-  block:
+- block:
     - name: Check cluster status
-      shell: ". ~/.bashrc && gs_om -t status --detail"
+      shell: "gs_om -t status"
       changed_when: false
-      args:
-        chdir: "{{ og_home }}/install/om/script"
       become_user: "{{ og_user }}"
+      delegate_to: "{{ og_master }}"
       run_once: true
-      register: cluster_detail
 
   rescue:
-    - name: Common sets for all distribution
-      import_tasks: os/common_set.yml
+    - name: Start pre tasks
+      import_tasks: pre_tasks.yml
 
-    - name: Custom sets by distribution
-      include_tasks: "{{ item }}"
-      with_first_found:
-        - "os/{{ ansible_distribution }}.yml"
-        - "os/not_supported.yml"
-
-    - name: Custom sets by os family
-      include_tasks: "{{ item }}"
-      with_first_found:
-        - "os/{{ ansible_os_family }}.yml"
-        - "os/not_supported.yml"
-
-    - import_tasks: install/user.yml
-
-    - include_tasks: install/ssh.yml
-      with_items:
-        - user: root
-          group: root
-          home: /root
-        - user: "{{ og_user }}"
-          group: "{{ og_group }}"
-          home: "/home/{{ og_user }}"
-      loop_control:
-        loop_var: og_ssh
-
-    - block:    
-        - import_tasks: install/upload.yml
-        - import_tasks: install/install.yml
+    - name: Start deploy
+      import_tasks: deploy/main.yml
       run_once: true
-    
-    - name: Check cluster status
-      shell: ". ~/.bashrc && gs_om -t status --detail"
-      changed_when: false
-      args:
-        chdir: "{{ og_home }}/install/om/script"
-      become_user: "{{ og_user }}"
-      run_once: true
-      register: cluster_detail
+      delegate_to: "{{ og_master }}"
 
   always:
-    - name: Remove authorized key
-      authorized_key:
-        user: root
-        state: absent
-        key: "{{ lookup('file', item) }}"
-      with_fileglob:
-        - "{{ inventory_dir }}/credentials/openGauss_id_*.pub"
-    
-    - name: Print cluster detail
-      debug:
-        msg: |
-          {{ cluster_detail.stdout_lines }}
+    - name: Run post tasks
+      import_tasks: post_tasks.yml
+
+- block:
+    - name: Check node status
+      shell: "gs_om -t status --detail -h {{ og_hostname }}"
+      changed_when: false
+      become_user: "{{ og_user }}"
+      delegate_to: "{{ og_master }}"
+      register: check_node
+      when: "inventory_hostname != og_master"
+
+  rescue:
+    - name: Cluster will be expand
+      set_fact:
+        og_expansion: true
+      when: 
+        - "check_node is failed"
+        - "check_node is defined"
+
+    - name: Start pre tasks
+      import_tasks: pre_tasks.yml
+
+    - name: Start deploy
+      import_tasks: deploy/main.yml
       run_once: true
+      delegate_to: "{{ og_master }}"
+
+  always:
+    - name: Run post tasks
+      import_tasks: post_tasks.yml
+

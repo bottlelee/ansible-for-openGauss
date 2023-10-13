@@ -1,0 +1,29 @@
+
+- name: Check cluster status
+  shell: "gs_om -t status --detail"
+  changed_when: false
+  become_user: "{{ og_user }}"
+  when: "inventory_hostname == og_master"
+
+- block:
+    - debug:
+        msg: "{{ inventory_hostname }} {{ og_master }}"
+
+    - name: "Check {{ inventory_hostname }} status"
+      shell: "gs_om -t status --detail -h og{{ inventory_hostname | ipaddr('int') }}"
+      changed_when: false
+      become_user: "{{ og_user }}"
+      delegate_to: "{{ og_master }}"
+      delegate_facts: false
+  
+  rescue:
+    - name: "Add {{ inventory_hostname }} to group 'expansion'"
+      add_host:
+        hostname: "{{ inventory_hostname }}"
+        groups: "expansion"
+
+    - name: Set expansion fact
+      set_fact:
+        og_expansion: true
+  when: "inventory_hostname != og_master"
+

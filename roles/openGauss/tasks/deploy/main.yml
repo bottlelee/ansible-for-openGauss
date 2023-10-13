@@ -1,0 +1,37 @@
+- name: Config known hosts
+  include_tasks: deploy/known_hosts.yml
+  with_items:
+    - user: root
+      group: root
+      home: /root
+    - user: "{{ og_user }}"
+      group: "{{ og_group }}"
+      home: "/home/{{ og_user }}"
+  loop_control:
+    loop_var: og_ssh
+  # tags: always
+  # run_once: true
+
+- name: Config authorized keys
+  include_tasks: deploy/add_auth.yml
+  loop: "{{ og_all_nodes }}"
+  loop_control:
+    loop_var: node
+  # tags: always
+  # run_once: true
+
+- name: Install or expand
+  block:
+    - name: Check gs_om command
+      shell: "which gs_om || echo 'not installed'"
+      changed_when: false
+      register: gs_com_st
+    
+    - name: Upload packages
+      import_tasks: deploy/upload.yml
+      when: "'not installed' in gs_com_st.stdout_lines"
+    
+    - name: Start install
+      import_tasks: deploy/install.yml
+  # delegate_to: "{{ og_master }}"
+  # run_once: true

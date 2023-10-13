@@ -1,27 +1,20 @@
 - name: Upload and extract files
   block:
-    - name: Create /opt/software/openGauss
+    - name: "Create {{ og_upload_path }}"
       file:
-        path: /opt/software/openGauss
+        path: "{{ og_upload_path }}"
         state: directory
-        # owner: "{{ og_user }}"
-        # group: "{{ og_group }}"
-        recurse: true
 
     - name: "Extracting {{ og_pkg_url | basename }}"
       unarchive:
         src: "{{ playbook_dir }}/downloaded_files/{{ og_pkg_url | basename }}"
-        dest: /opt/software/openGauss/
-        # owner: "{{ og_user }}"
-        # group: "{{ og_group }}"
+        dest: "{{ og_upload_path }}/"
 
     - name: "Extracting {{ og_pkg_url | basename | replace('all', 'om') }}"
       unarchive:
         remote_src: true
-        src: "/opt/software/openGauss/{{ og_pkg_url | basename | replace('all', 'om') }}"
-        dest: "/opt/software/openGauss/"
-        # owner: "{{ og_user }}"
-        # group: "{{ og_group }}"
+        src: "{{ og_upload_path }}/{{ og_pkg_url | basename | replace('all', 'om') }}"
+        dest: "{{ og_upload_path }}/"
 
   rescue:
     - name: "Get {{ og_pkg_url }}"
@@ -39,5 +32,5 @@
       delegate_to: localhost
       become: false
     
-    - include_tasks: install/upload.yml
+    - include_tasks: deploy/upload.yml
 

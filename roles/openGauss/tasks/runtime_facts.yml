@@ -1,4 +1,4 @@
-- name: Set runtime facts
+- name: Set runtime facts - 1
   set_fact:
     og_user: "{{ combined_vars.openGauss_env.user_name }}"
     og_group: "{{ combined_vars.openGauss_env.user_group }}"
@@ -7,13 +7,16 @@
     og_paths: "{{ combined_vars.openGauss_paths }}"
     og_pkg_url: "{{ combined_vars.openGauss_download[ansible_architecture][ansible_distribution + '_' + ansible_distribution_major_version] }}"
     og_ver: "{{ combined_vars.openGauss_version }}"
-    og_ip_list: "{{ groups['openGauss'] | sort | join(',') }}"
-    og_host_list: >-
-      {%- for cm_node in (groups['openGauss'] | sort) -%}      
-        opengauss{{ loop.index }}{{ (loop.nextitem is defined) | ternary(',', '') }}
-      {%- endfor -%}
-    og_hostname: >-
-      {%- for cm_node in (groups['openGauss'] | sort) if cm_node == inventory_hostname -%}      
-        opengauss{{ loop.index }}
-      {%- endfor -%}
+    og_hostname: "og{{ inventory_hostname | ipaddr('int') }}"
     og_data_path: "{{ combined_vars.openGauss_paths.dataPath }}"
+    og_all_nodes: "{{ groups['openGauss'] | sort }}"
+    og_master: "{{ groups['openGauss_master'] | first }}"
+
+- name: Set runtime facts - 2
+  set_fact:
+    og_upload_path: "/opt/software/{{ og_pkg_url | basename | replace('.tar.gz', '') }}"
+    og_host_list: >-
+      {%- for node in og_all_nodes -%}      
+        og{{ node | ipaddr('int') }}{{ (loop.nextitem is defined) | ternary(',', '') }}
+      {%- endfor -%}
+    og_ip_list: "{{ og_all_nodes | join(',') }}"

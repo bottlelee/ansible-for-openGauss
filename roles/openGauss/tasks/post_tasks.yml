@@ -1,0 +1,31 @@
+- name: Config /etc/sysctl.d/50-opengauss.conf
+  sysctl:
+    sysctl_file: /etc/sysctl.d/50-opengauss.conf
+    name: "{{ sysctl.key }}"
+    value: "{{ sysctl.value }}"
+  with_dict: "{{ combined_vars.openGauss_sysctl }}"
+  loop_control:
+    label: "{{ sysctl.key }} = {{ sysctl.value }}"
+    loop_var: sysctl
+
+- name: Remove authorized key
+  authorized_key:
+    user: root
+    state: absent
+    key: "{{ lookup('file', item) }}"
+  with_fileglob:
+    - "{{ inventory_dir }}/credentials/openGauss_id_*.pub"
+
+- name: Check and print
+  block:
+    - name: Check cluster status
+      command: "gs_om -t status --detail"
+      changed_when: false
+      become_user: "{{ og_user }}"
+      register: cluster_status
+
+    - name: Print cluster detail
+      debug:
+        msg: |
+          {{ cluster_status.stdout_lines }}
+  run_once: true

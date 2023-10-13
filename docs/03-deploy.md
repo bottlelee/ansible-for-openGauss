@@ -5,11 +5,20 @@
 1. 进入 ansible 环境
 
     ```
-    docker exec -it ansible byobu
+    docker exec -it ansible-for-opengauss byobu
     ```
 
-    关于 byobu 的使用，大家可自行搜索一些教程。
+    关于 byobu 的使用，大家可自行搜索一些教程。在 byobu 里运行的程序或命令，不会因为 SSH 断开而终止。
 
+    基本键盘操作有：
+
+    ```
+    F2：新建虚拟终端窗口
+    F3：向左切换窗口
+    F4：向右切换窗口
+    F6：将 byobu 置于后台。后续可以再次执行 `docker exec -it ansible-for-opengauss byobu` 进入。
+    ```
+    
 1. 执行部署
 
     ```
@@ -56,6 +65,7 @@ openGauss_cascade
 ## 1 主 1 从
 
 ![1主1从](imgs/1695614019287.png)
+
 对应的 hosts.ini 分组编排内容
 
 ```
@@ -76,6 +86,7 @@ openGauss_cascade
 ## 1 主 1 从 1 级联
 
 ![1主1从1级联](imgs/1695614019263.png)
+
 对应的 hosts.ini 分组编排内容
 
 ```
@@ -97,6 +108,7 @@ openGauss_cascade
 ## 1 主 2 从
 
 ![1主2从](imgs/1695614019240.png)
+
 对应的 hosts.ini 分组编排内容
 
 ```
@@ -114,3 +126,7 @@ openGauss_master
 openGauss_follower
 openGauss_cascade
 ```
+
+## 集群扩容
+
+[扩容](04-expansion.md)
