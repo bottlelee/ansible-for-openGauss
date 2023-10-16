@@ -1,2 +1,7 @@
 ---
 # handlers file for openGauss
+- name: Restart systemd-logind.service
+  ansible.builtin.service:
+    name: systemd-logind
+    state: restarted
+    enabled: true

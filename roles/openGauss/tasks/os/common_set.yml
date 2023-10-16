@@ -1,9 +1,9 @@
 - name: Set hostname
-  hostname:
+  ansible.builtin.hostname:
     name: "{{ og_hostname }}"
 
 - name: Disable selinux
-  selinux:
+  ansible.posix.selinux:
     state: disabled
   when: "ansible_selinux.status != 'disabled'"
 
@@ -16,48 +16,45 @@
     path: /etc/systemd/logind.conf
     section: Login
     option: RemoveIPC
-    value: 'no'
+    value: "no"
+    mode: "0644"
 
 - name: Config /usr/lib/systemd/system/systemd-logind.service
   ini_file:
     path: /usr/lib/systemd/system/systemd-logind.service
     section: Service
     option: RemoveIPC
-    value: 'no'
-  register: systemd_logind
+    value: "no"
+    mode: "0644"
+  notify: Restart systemd-logind.service
 
-- name: Restart systemd-logind.service
-  service:
-    name: systemd-logind
-    state: restarted
-    enabled: true
-  when: "systemd_logind is changed"
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
 
 - name: Disable history command logs
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/profile
     line: "HISTSIZE=0"
     regex: "^HISTSIZE="
     backup: true
 
 - name: Install dependencies
-  package:
+  ansible.builtin.package:
     name:
       - bzip2
       - expect
       - net-tools
       - ntp
-    state: latest
     update_cache: true
 
 - name: Enable ntpd service
-  service:
+  ansible.builtin.service:
     name: ntpd
     state: started
     enabled: true
 
 - name: Config /etc/hosts
-  blockinfile:
+  ansible.builtin.blockinfile:
     path: /etc/hosts
     marker: "# {mark} OPENGAUSS NODES"
     block: |
@@ -70,15 +67,18 @@
     loop_var: node
   run_once: true
 
-- name: Get iface name
-  shell: "ip a | grep {{ backIp1 | default(inventory_hostname) }} | awk '{print $NF}'"
+- name: Get backIp1's iface name
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      ip a | grep {{ backIp1 | default(inventory_hostname) }} | awk '{print $NF}'
   changed_when: false
-  register: backIface
+  register: backiface
 
-- name: Set og_back_iface
-  set_fact:
-    og_back_iface: "{{ backIface.stdout | trim }}"
+- name: "The backIp1's is {{ backiface.stdout | trim }}"
+  ansible.builtin.set_fact:
+    og_back_iface: "{{ backiface.stdout | trim }}"
 
-- name: "Set {{ og_back_iface }}'s MTU to {{ combined_vars.openGauss_env.iface_mtu }} on the fly"
-  command: "ifconfig {{ og_back_iface }} mtu {{ combined_vars.openGauss_env.iface_mtu }}"
+- name: "Set MTU on the fly: {{ combined_vars.openGauss_env.iface_mtu }}"
+  ansible.builtin.command: "ifconfig {{ og_back_iface }} mtu {{ combined_vars.openGauss_env.iface_mtu }}"
   changed_when: false

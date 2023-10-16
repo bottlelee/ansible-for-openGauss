@@ -1,5 +1,5 @@
 - name: Set runtime facts - 1
-  set_fact:
+  ansible.builtin.set_fact:
     og_user: "{{ combined_vars.openGauss_env.user_name }}"
     og_group: "{{ combined_vars.openGauss_env.user_group }}"
     og_user_pass: "{{ combined_vars.openGauss_env.user_pass }}"
@@ -13,10 +13,10 @@
     og_master: "{{ groups['openGauss_master'] | first }}"
 
 - name: Set runtime facts - 2
-  set_fact:
+  ansible.builtin.set_fact:
     og_upload_path: "/opt/software/{{ og_pkg_url | basename | replace('.tar.gz', '') }}"
     og_host_list: >-
-      {%- for node in og_all_nodes -%}      
+      {%- for node in og_all_nodes -%}
         og{{ node | ipaddr('int') }}{{ (loop.nextitem is defined) | ternary(',', '') }}
       {%- endfor -%}
     og_ip_list: "{{ og_all_nodes | join(',') }}"

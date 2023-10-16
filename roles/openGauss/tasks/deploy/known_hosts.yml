@@ -1,19 +1,10 @@
-- name: Scan hosts key
-  command: "ssh-keyscan -p {{ port }} {{ node }},og{{ node | ipaddr('int') }}"
-  changed_when: false
-  loop: "{{ og_all_nodes }}"
-  loop_control:
-    loop_var: node
-  vars:
-    port: "{{ ansible_ssh_port | default('22') }}"
-  register: known_host_keys
-
-- name: "Update {{ og_ssh.home }}/.ssh/known_hosts"
-  blockinfile:
+- name: "Update known_hosts"
+  ansible.builtin.blockinfile:
     path: "{{ og_ssh.home }}/.ssh/known_hosts"
     owner: "{{ og_ssh.user }}"
     group: "{{ og_ssh.group }}"
     create: true
+    mode: "0644"
     block: |
       {% for key in (host_keys | sort) %}
       {{ key }}

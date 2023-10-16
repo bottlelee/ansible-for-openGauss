@@ -1,23 +1,23 @@
 - name: Common sets for all distribution
-  import_tasks: os/common_set.yml
+  ansible.builtin.import_tasks: os/common_set.yml
 
 - name: Custom sets by distribution
-  include_tasks: "{{ item }}"
+  ansible.builtin.include_tasks: "{{ item }}"
   with_first_found:
     - "os/{{ ansible_distribution }}.yml"
     - "os/not_supported.yml"
 
 - name: Custom sets by os family
-  include_tasks: "{{ item }}"
+  ansible.builtin.include_tasks: "{{ item }}"
   with_first_found:
     - "os/{{ ansible_os_family }}.yml"
     - "os/not_supported.yml"
 
 - name: Config user on hosts
-  import_tasks: os/user.yml
+  ansible.builtin.import_tasks: os/user.yml
 
 - name: Config ssh on hosts
-  include_tasks: os/ssh.yml
+  ansible.builtin.include_tasks: os/ssh.yml
   with_items:
     - user: root
       group: root

@@ -1,9 +1,9 @@
 - name: Install epel-release
-  package:
+  ansible.builtin.package:
     name: epel-release
-    
+
 - name: Install dependencies
-  package:
+  ansible.builtin.package:
     name:
       - python36
       - libaio-devel
@@ -16,4 +16,3 @@
       - readline-devel
       - nano
       - htop
-

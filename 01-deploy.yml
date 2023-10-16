@@ -1,3 +1,5 @@
+# code: language=ansible
+
 - name: Deploy openGauss
   hosts: openGauss
   become: true

@@ -1,54 +1,58 @@
-- name: Create {{ og_upload_path }}/cluster_config.xml
-  template:
+- name: "Create cluster_config.xml under {{ og_upload_path }}"
+  ansible.builtin.template:
     src: "{{ item }}"
     dest: "{{ og_upload_path }}/cluster_config.xml"
     owner: "{{ og_user }}"
     group: "{{ og_group }}"
+    mode: "0600"
     backup: true
     lstrip_blocks: true
   with_first_found:
     - "{{ inventory_dir }}/templates/cluster_config.xml.j2"
     - "cluster_config.xml.j2"
 
+- debug:
+    msg: "{{ og_expansion }}"
+
 - name: First time deploy
+  when: "not og_expansion"
   block:
     - name: Starting pre install
-      command: "python3 gs_preinstall -U {{ og_user }} -G {{ og_group }} -X {{ og_upload_path }}/cluster_config.xml --non-interactive"
+      ansible.builtin.command: "python3 gs_preinstall -U {{ og_user }} -G {{ og_group }} -X {{ og_upload_path }}/cluster_config.xml --non-interactive"
+      changed_when: false
       args:
         chdir: "{{ og_upload_path }}/script"
-      changed_when: false
 
     - name: Deploy openGauss
-      command: |
+      ansible.builtin.command: |
         python3 gs_install \
           -X {{ og_upload_path }}/cluster_config.xml \
           --gsinit-parameter="--pwpasswd={{ combined_vars.openGauss_db_set.root_pass }}"
+      changed_when: false
       args:
         chdir: "{{ og_home }}/install/om/script"
       become_user: "{{ og_user }}"
-  when: "not og_expansion"
 
 - name: Expand cluster
+  when: "og_expansion"
   block:
     - name: Get cluster status detail
-      shell: "gs_om -t status --detail"
+      ansible.builtin.command: "gs_om -t status --detail"
       changed_when: false
       become_user: "{{ og_user }}"
       register: cluster_status
 
     - name: Starting expand
-      shell: >-
+      ansible.builtin.shell: >-
         . /home/{{ og_user }}/.bashrc &&
           python3 gs_expansion -U {{ og_user }} -G {{ og_group }} -X {{ og_upload_path }}/cluster_config.xml -h {{ expansion_list }}
       args:
         chdir: "{{ og_upload_path }}/script"
       vars:
         expansion_list: >-
-          {%- 
-            for node in og_all_nodes
-              if node not in cluster_status.stdout
+          {%- for node in og_all_nodes
+                if node not in cluster_status.stdout
           -%}
             {{ node }}{{ (loop.nextitem is defined) | ternary(',', '') }}
           {%- endfor -%}
       changed_when: false
-  when: "og_expansion"

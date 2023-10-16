@@ -1,36 +1,39 @@
 - name: Upload and extract files
   block:
     - name: "Create {{ og_upload_path }}"
-      file:
+      ansible.builtin.file:
         path: "{{ og_upload_path }}"
         state: directory
+        mode: "0755"
 
     - name: "Extracting {{ og_pkg_url | basename }}"
-      unarchive:
+      ansible.builtin.unarchive:
         src: "{{ playbook_dir }}/downloaded_files/{{ og_pkg_url | basename }}"
         dest: "{{ og_upload_path }}/"
 
     - name: "Extracting {{ og_pkg_url | basename | replace('all', 'om') }}"
-      unarchive:
+      ansible.builtin.unarchive:
         remote_src: true
         src: "{{ og_upload_path }}/{{ og_pkg_url | basename | replace('all', 'om') }}"
         dest: "{{ og_upload_path }}/"
 
   rescue:
     - name: "Get {{ og_pkg_url }}"
-      block:
-        - name: "Create {{ playbook_dir }}/downloaded_files"
-          file:
-            path: "{{ playbook_dir }}/downloaded_files"
-            state: directory
-
-        - name: Downloading
-          get_url:
-            url: "{{ og_pkg_url }}"
-            dest: "{{ playbook_dir }}/downloaded_files/"
       run_once: true
       delegate_to: localhost
       become: false
-    
-    - include_tasks: deploy/upload.yml
+      block:
+        - name: "Create path 'downloaded_files' in {{ playbook_dir }}"
+          ansible.builtin.file:
+            path: "{{ playbook_dir }}/downloaded_files"
+            state: directory
+            mode: "0755"
 
+        - name: Downloading
+          ansible.builtin.get_url:
+            url: "{{ og_pkg_url }}"
+            dest: "{{ playbook_dir }}/downloaded_files/"
+            mode: "0644"
+
+    - name: Repeat tasks
+      ansible.builtin.include_tasks: deploy/upload.yml

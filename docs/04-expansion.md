@@ -8,6 +8,8 @@
 
 ## 修改 `ansible-docker\inventories\opengauss\hosts.ini` 文件
 
+备机数量不可超过 8 台。
+
 假设原编排为 1 主 1 备 1 级联。
 
 ```

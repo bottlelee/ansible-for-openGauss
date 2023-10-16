@@ -1,20 +1,21 @@
 ---
 # tasks file for openGauss
- 
+
 - name: Tasks always run
+  tags: always
   block:
     - name: Combine vars
-      import_role:
+      ansible.builtin.import_role:
         name: "pre-tasks"
         tasks_from: "vars_combine.yml"
 
     - name: Set runtime facts
-      import_tasks: runtime_facts.yml
-  tags: always
+      ansible.builtin.import_tasks: runtime_facts.yml
 
-- block:
+- name: Deploy cluster
+  block:
     - name: Check cluster status
-      shell: "gs_om -t status"
+      ansible.builtin.command: "gs_om -t status"
       changed_when: false
       become_user: "{{ og_user }}"
       delegate_to: "{{ og_master }}"
@@ -22,20 +23,17 @@
 
   rescue:
     - name: Start pre tasks
-      import_tasks: pre_tasks.yml
+      ansible.builtin.import_tasks: pre_tasks.yml
 
     - name: Start deploy
-      import_tasks: deploy/main.yml
       run_once: true
       delegate_to: "{{ og_master }}"
+      ansible.builtin.import_tasks: deploy/main.yml
 
-  always:
-    - name: Run post tasks
-      import_tasks: post_tasks.yml
-
-- block:
+- name: Expand cluster
+  block:
     - name: Check node status
-      shell: "gs_om -t status --detail -h {{ og_hostname }}"
+      ansible.builtin.command: "gs_om -t status --detail -h {{ og_hostname }}"
       changed_when: false
       become_user: "{{ og_user }}"
       delegate_to: "{{ og_master }}"
@@ -43,22 +41,26 @@
       when: "inventory_hostname != og_master"
 
   rescue:
-    - name: Cluster will be expand
-      set_fact:
+    - name: Hosts below will be added into cluster
+      ansible.builtin.set_fact:
         og_expansion: true
-      when: 
-        - "check_node is failed"
+      when:
         - "check_node is defined"
+        - "check_node is failed"
 
     - name: Start pre tasks
-      import_tasks: pre_tasks.yml
+      ansible.builtin.import_tasks: pre_tasks.yml
 
     - name: Start deploy
-      import_tasks: deploy/main.yml
       run_once: true
       delegate_to: "{{ og_master }}"
+      ansible.builtin.import_tasks: deploy/main.yml
 
-  always:
-    - name: Run post tasks
-      import_tasks: post_tasks.yml
+- name: Run post tasks
+  ansible.builtin.import_tasks: post_tasks.yml
 
+- name: Generate reports
+  ansible.builtin.import_tasks: report.yml
+  tags:
+    - never
+    - report

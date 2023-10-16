@@ -36,9 +36,9 @@
       <PARAM name="dataNum" value="1"/>
       <PARAM name="dataPortBase" value="15400"/>
       <PARAM name="dataNode1" value="{{ og_data_path }}/dn
-      {% for dn in og_all_nodes if dn not in groups['openGauss_master'] %}
+      {%- for dn in og_all_nodes if dn not in groups['openGauss_master'] -%}
         ,og{{ dn | ipaddr('int') }},{{ og_data_path }}/dn
-      {% endfor %}
+      {%- endfor -%}
       "/>
       <PARAM name="dataNode1_syncNum" value="0"/>
 {% endif %}
