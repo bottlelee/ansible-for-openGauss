@@ -14,15 +14,15 @@
 
 ```
 ; 主服务器组，仅设置 1 个目标机。
-[openGauss_master]
+[opengauss_master]
 192.168.56.11
 
 ; 从服务器组，可设置若干个或留空。
-[openGauss_follower]
+[opengauss_follower]
 192.168.56.12
 
 ; 级联服务器组，可设置若干个或留空。
-[openGauss_cascade]
+[opengauss_cascade]
 192.168.56.13
 
 ```
@@ -31,17 +31,17 @@
 
 ```
 ; 主服务器组，仅设置 1 个目标机。
-[openGauss_master]
+[opengauss_master]
 192.168.56.11
 
 ; 从服务器组，可设置若干个或留空。
-[openGauss_follower]
+[opengauss_follower]
 192.168.56.12
 192.168.56.14
 192.168.56.16
 
 ; 级联服务器组，可设置若干个或留空。
-[openGauss_cascade]
+[opengauss_cascade]
 192.168.56.13
 192.168.56.15
 

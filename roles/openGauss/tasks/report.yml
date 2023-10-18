@@ -1,9 +1,9 @@
 - name: Generating performance report
-  command: "{{ python_name }} gs_checkperf --detail -o {{ openGauss_home }}/perf.txt"
+  command: "{{ python_name }} gs_checkperf --detail -o {{ opengauss_home }}/perf.txt"
   changed_when: false
 
-- name: "Fetch {{ openGauss_home }}/perf.txt to {{ inventory_dir }}/report/"
+- name: "Fetch {{ opengauss_home }}/perf.txt to {{ inventory_dir }}/report/"
   fetch:
-    src: "{{ openGauss_home }}/perf.txt"
+    src: "{{ opengauss_home }}/perf.txt"
     dest: "{{ inventory_dir }}/report/"
     flat: true

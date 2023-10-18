@@ -3,7 +3,7 @@
     sysctl_file: /etc/sysctl.d/50-opengauss.conf
     name: "{{ sysctl.key }}"
     value: "{{ sysctl.value }}"
-  with_dict: "{{ combined_vars.openGauss_sysctl }}"
+  with_dict: "{{ combined_vars.opengauss_sysctl }}"
   loop_control:
     label: "{{ sysctl.key }} = {{ sysctl.value }}"
     loop_var: sysctl
@@ -14,7 +14,7 @@
     state: absent
     key: "{{ lookup('file', item) }}"
   with_fileglob:
-    - "{{ inventory_dir }}/credentials/openGauss_id_*.pub"
+    - "{{ inventory_dir }}/credentials/opengauss_id_*.pub"
 
 - name: Check and print
   run_once: true

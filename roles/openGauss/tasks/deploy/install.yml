@@ -24,10 +24,11 @@
         chdir: "{{ og_upload_path }}/script"
 
     - name: Deploy openGauss
-      ansible.builtin.command: |
-        python3 gs_install \
+      ansible.builtin.shell: |
+        . /home/{{ og_user }}/.bashrc && \
+          python3 gs_install \
           -X {{ og_upload_path }}/cluster_config.xml \
-          --gsinit-parameter="--pwpasswd={{ combined_vars.openGauss_db_set.root_pass }}"
+          --gsinit-parameter="--pwpasswd={{ combined_vars.opengauss_db_set.root_pass }}"
       changed_when: false
       args:
         chdir: "{{ og_home }}/install/om/script"

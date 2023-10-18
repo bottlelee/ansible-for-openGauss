@@ -11,51 +11,51 @@
     - name: Upload ssh keys
       copy:
         src: "{{ og_key }}"
-        dest: "{{ og_ssh.home }}/.ssh/{{ og_key | basename | replace('openGauss_', '') }}"
+        dest: "{{ og_ssh.home }}/.ssh/{{ og_key | basename | replace('opengauss_', '') }}"
         mode: 0400
         owner: "{{ og_ssh.user }}"
         group: "{{ og_ssh.group }}"
         backup: true
       with_fileglob:
-        - "{{ inventory_dir }}/credentials/openGauss_id*"
+        - "{{ inventory_dir }}/credentials/opengauss_id*"
       loop_control:
         loop_var: og_key
-        label: "{{ og_ssh.home }}/.ssh/{{ og_key | basename | replace('openGauss_', '') }}"
+        label: "{{ og_ssh.home }}/.ssh/{{ og_key | basename | replace('opengauss_', '') }}"
       register: keys_list
 
     - name: Failed when no keys founded
       fail:
         msg: "SSH keys not existed"
       when: "keys_list.skipped"
-    
+
     # - name: Add authorized key
     #   authorized_key:
     #     user: "{{ og_ssh.user }}"
     #     state: present
     #     key: "{{ lookup('file', pub_key) }}"
     #   with_fileglob:
-    #     - "{{ inventory_dir }}/credentials/openGauss_id*.pub"
+    #     - "{{ inventory_dir }}/credentials/opengauss_id*.pub"
     #   loop_control:
     #     loop_var: pub_key
-    #     label: "{{ og_ssh.home }}/.ssh/{{ pub_key | basename | replace('openGauss_', '') }}"
+    #     label: "{{ og_ssh.home }}/.ssh/{{ pub_key | basename | replace('opengauss_', '') }}"
 
   rescue:
     - name: Generate ssh keys
-      block: 
+      block:
         - name: "Create {{ inventory_dir }}/credentials"
           file:
             path: "{{ inventory_dir }}/credentials"
             state: directory
 
-        - name: Generate openGauss_id_om
+        - name: Generate opengauss_id_om
           openssh_keypair:
-            path: "{{ inventory_dir }}/credentials/openGauss_id_om"
+            path: "{{ inventory_dir }}/credentials/opengauss_id_om"
             type: ed25519
             regenerate: never
 
-        - name: Generate openGauss_id_rsa
+        - name: Generate opengauss_id_rsa
           openssh_keypair:
-            path: "{{ inventory_dir }}/credentials/openGauss_id_rsa"
+            path: "{{ inventory_dir }}/credentials/opengauss_id_rsa"
             regenerate: never
       delegate_to: localhost
       become: false

@@ -18,7 +18,7 @@
     F4：向右切换窗口
     F6：将 byobu 置于后台。后续可以再次执行 `docker exec -it ansible-for-opengauss byobu` 进入。
     ```
-    
+
 1. 执行部署
 
     ```
@@ -30,14 +30,14 @@
 1. 部署过程中自动生成的公私钥，以及账号密码，存放在 `ansible-docker/inventories/opengauss/credentials`
 
     ```
-    ls -l ansible-docker/inventories/opengauss/credentials/ 
+    ls -l ansible-docker/inventories/opengauss/credentials/
     total 24
-    -rw------- 1 root root  387  9月24日 14:24 openGauss_id_om
-    -rw-r--r-- 1 root root   82  9月24日 14:24 openGauss_id_om.pub
-    -rw------- 1 root root 3357  9月24日 14:24 openGauss_id_rsa
-    -rw-r--r-- 1 root root  726  9月24日 14:24 openGauss_id_rsa.pub
-    -rw------- 1 root root   21  9月24日 13:36 openGauss_omm_pass
-    -rw------- 1 root root   17  9月24日 13:36 openGauss_root_pass    
+    -rw------- 1 root root  387  9月24日 14:24 opengauss_id_om
+    -rw-r--r-- 1 root root   82  9月24日 14:24 opengauss_id_om.pub
+    -rw------- 1 root root 3357  9月24日 14:24 opengauss_id_rsa
+    -rw-r--r-- 1 root root  726  9月24日 14:24 opengauss_id_rsa.pub
+    -rw------- 1 root root   21  9月24日 13:36 opengauss_omm_pass
+    -rw------- 1 root root   17  9月24日 13:36 opengauss_root_pass
     ```
 
 # 顺利部署后，你可看到一下输出内容
@@ -49,17 +49,17 @@
 对应的 hosts.ini 分组编排内容
 
 ```
-[openGauss_master]
+[opengauss_master]
 192.168.56.11
 
-[openGauss_follower]
+[opengauss_follower]
 
-[openGauss_cascade]
+[opengauss_cascade]
 
 [openGauss:children]
-openGauss_master
-openGauss_follower
-openGauss_cascade
+opengauss_master
+opengauss_follower
+opengauss_cascade
 ```
 
 ## 1 主 1 从
@@ -69,18 +69,18 @@ openGauss_cascade
 对应的 hosts.ini 分组编排内容
 
 ```
-[openGauss_master]
+[opengauss_master]
 192.168.56.12
 
-[openGauss_follower]
+[opengauss_follower]
 192.168.56.13
 
-[openGauss_cascade]
+[opengauss_cascade]
 
 [openGauss:children]
-openGauss_master
-openGauss_follower
-openGauss_cascade
+opengauss_master
+opengauss_follower
+opengauss_cascade
 ```
 
 ## 1 主 1 从 1 级联
@@ -90,19 +90,19 @@ openGauss_cascade
 对应的 hosts.ini 分组编排内容
 
 ```
-[openGauss_master]
+[opengauss_master]
 192.168.56.14
 
-[openGauss_follower]
+[opengauss_follower]
 192.168.56.15
 
-[openGauss_cascade]
+[opengauss_cascade]
 192.168.56.16
 
 [openGauss:children]
-openGauss_master
-openGauss_follower
-openGauss_cascade
+opengauss_master
+opengauss_follower
+opengauss_cascade
 ```
 
 ## 1 主 2 从
@@ -112,19 +112,19 @@ openGauss_cascade
 对应的 hosts.ini 分组编排内容
 
 ```
-[openGauss_master]
+[opengauss_master]
 192.168.56.17
 
-[openGauss_follower]
+[opengauss_follower]
 192.168.56.18
 192.168.56.19
 
-[openGauss_cascade]
+[opengauss_cascade]
 
 [openGauss:children]
-openGauss_master
-openGauss_follower
-openGauss_cascade
+opengauss_master
+opengauss_follower
+opengauss_cascade
 ```
 
 ## 集群扩容

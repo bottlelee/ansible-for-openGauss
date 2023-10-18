@@ -1,18 +1,11 @@
 - name: Install epel-release
   ansible.builtin.package:
     name: epel-release
+    use: "{{ custom_pkg_mgr | default(ansible_pkg_mgr) }}"
 
 - name: Install dependencies
   ansible.builtin.package:
     name:
       - python36
-      - libaio-devel
-      - flex
-      - bison
-      - ncurses-devel
-      - glibc-devel
-      - patch
       - redhat-lsb-core
-      - readline-devel
-      - nano
-      - htop
+    use: "{{ custom_pkg_mgr | default(ansible_pkg_mgr) }}"

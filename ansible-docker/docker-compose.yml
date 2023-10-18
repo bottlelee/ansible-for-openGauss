@@ -10,10 +10,8 @@ services:
       context: .
     working_dir: /workdir
     volumes:
-      - "./inventories:/etc/ansible/inventories"
+      - "../inventories:/etc/ansible/inventories"
       - "../:/workdir"
-      - "./ansible.cfg:/etc/ansible/ansible.cfg"
     entrypoint:
-      - "tail"
+      - "crond"
       - "-f"
-      - "/dev/null"

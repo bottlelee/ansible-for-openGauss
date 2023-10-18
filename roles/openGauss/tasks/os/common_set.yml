@@ -45,7 +45,19 @@
       - expect
       - net-tools
       - ntp
+      - tar
+      - gzip
+      - readline-devel
+      - patch
+      - ncurses-devel
+      - libaio-devel
+      - glibc-devel
+      - flex
+      - bison
+      - nano
+      - htop
     update_cache: true
+    use: "{{ custom_pkg_mgr | default(ansible_pkg_mgr) }}"
 
 - name: Enable ntpd service
   ansible.builtin.service:
@@ -79,6 +91,6 @@
   ansible.builtin.set_fact:
     og_back_iface: "{{ backiface.stdout | trim }}"
 
-- name: "Set MTU on the fly: {{ combined_vars.openGauss_env.iface_mtu }}"
-  ansible.builtin.command: "ifconfig {{ og_back_iface }} mtu {{ combined_vars.openGauss_env.iface_mtu }}"
+- name: "Set MTU on the fly: {{ combined_vars.opengauss_env.iface_mtu }}"
+  ansible.builtin.command: "ifconfig {{ og_back_iface }} mtu {{ combined_vars.opengauss_env.iface_mtu }}"
   changed_when: false

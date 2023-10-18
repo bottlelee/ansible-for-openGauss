@@ -6,6 +6,7 @@
 
 * x86_64
   * CentOS 7.6
+  * openEuler 20.03 LTS SP3
 
 # 已适配的 openGauss 版本
 
@@ -24,7 +25,7 @@
     默认变量
 
     ```
-    openGauss_env:
+    opengauss_env:
       user_name: omm
       user_group: dbgrp
     ```
@@ -32,7 +33,7 @@
     自定义变量文件 `{{ inventory_dir }}/group_vars/openGauss.yml`
 
     ```
-    openGauss_env:
+    opengauss_env:
       user_name: ommo
     ```
 
@@ -40,7 +41,7 @@
 
     ```
     combined_vars:
-      openGauss_env:
+      opengauss_env:
         user_name: ommo
         user_group: dbgrp
     ```

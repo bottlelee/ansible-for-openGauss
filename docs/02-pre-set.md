@@ -6,22 +6,22 @@
 
 ```
 ; 主服务器组，仅设置 1 个目标机。
-[openGauss_master]
+[opengauss_master]
 192.168.56.11
 
 ; 从服务器组，可设置若干个或留空。
-[openGauss_follower]
+[opengauss_follower]
 192.168.56.12
 
 ; 级联服务器组，可设置若干个或留空。
-[openGauss_cascade]
+[opengauss_cascade]
 192.168.56.13
 
 ; 以上 3 个分组的合并组，勿动。
 [openGauss:children]
-openGauss_master
-openGauss_follower
-openGauss_cascade
+opengauss_master
+opengauss_follower
+opengauss_cascade
 
 ; 机器的 SSH 信息，请根据你的实际情况修改。
 [openGauss:vars]
@@ -43,7 +43,7 @@ ansible_ssh_port=22
 
 ```
 # Sysctl 的配置，可自行扩展。
-openGauss_sysctl:
+opengauss_sysctl:
   net.ipv4.tcp_retries1: 5
   net.ipv4.tcp_syn_retries: 5
 ```
@@ -52,7 +52,7 @@ openGauss_sysctl:
 
 ```
 # Sysctl 的配置，可自行扩展。
-openGauss_sysctl:
+opengauss_sysctl:
   net.ipv4.tcp_retries1: 5
   net.ipv4.tcp_syn_retries: 3
   net.ipv4.tcp_synack_retries： 5
@@ -62,7 +62,7 @@ openGauss_sysctl:
 
 ```
 combined_vars:
-  openGauss_sysctl:
+  opengauss_sysctl:
     net.ipv4.tcp_retries1: 5
     net.ipv4.tcp_syn_retries: 3
     net.ipv4.tcp_synack_retries： 5
