@@ -6,27 +6,28 @@
 master 组仅可以配置 1 台机器。follower 可以多台。cascade 可选可为空。
 
 ```
-[openGauss_master]
+[opengauss_master]
 192.168.56.11
 
-[openGauss_follower]
+[opengauss_follower]
 192.168.56.12
 
-[openGauss_cascade]
+[opengauss_cascade]
 192.168.56.13
 
 [openGauss:children]
-openGauss_master
-openGauss_follower
-openGauss_cascade
+opengauss_master
+opengauss_follower
+opengauss_cascade
 ```
 
 # playbook.yml 示例
 
 ```
-- name: Deploy openGauss database
+- name: Deploy openGauss
   hosts: openGauss
   become: true
+  become_flags: "-i"
   roles:
     - openGauss
 ```

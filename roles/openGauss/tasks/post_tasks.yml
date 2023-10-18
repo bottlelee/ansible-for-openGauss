@@ -1,0 +1,31 @@
+- name: Config /etc/sysctl.d/50-opengauss.conf
+  ansible.posix.sysctl:
+    sysctl_file: /etc/sysctl.d/50-opengauss.conf
+    name: "{{ sysctl.key }}"
+    value: "{{ sysctl.value }}"
+  with_dict: "{{ combined_vars.opengauss_sysctl }}"
+  loop_control:
+    label: "{{ sysctl.key }} = {{ sysctl.value }}"
+    loop_var: sysctl
+
+- name: Remove authorized key
+  ansible.posix.authorized_key:
+    user: root
+    state: absent
+    key: "{{ lookup('file', item) }}"
+  with_fileglob:
+    - "{{ inventory_dir }}/credentials/opengauss_id_*.pub"
+
+- name: Check and print
+  run_once: true
+  block:
+    - name: Check cluster status
+      ansible.builtin.command: "gs_om -t status --detail"
+      changed_when: false
+      become_user: "{{ og_user }}"
+      register: cluster_status
+
+    - name: Print cluster detail
+      ansible.builtin.debug:
+        msg: |
+          {{ cluster_status.stdout_lines }}

@@ -1,0 +1,29 @@
+- name: "Custom sets for {{ ansible_distribution }}"
+  ansible.builtin.include_tasks: "{{ item }}"
+  with_first_found:
+    - "os/{{ ansible_distribution | replace(' ', '_') }}.yml"
+    - "os/not_supported.yml"
+
+- name: Common sets for all distribution
+  ansible.builtin.import_tasks: os/common_set.yml
+
+- name: "Custom sets for {{ ansible_os_family }}"
+  ansible.builtin.include_tasks: "{{ item }}"
+  with_first_found:
+    - "os/{{ ansible_os_family }}.yml"
+    - "os/not_supported.yml"
+
+- name: Config user on hosts
+  ansible.builtin.import_tasks: os/user.yml
+
+- name: Config ssh on hosts
+  ansible.builtin.include_tasks: os/ssh.yml
+  with_items:
+    - user: root
+      group: root
+      home: /root
+    - user: "{{ og_user }}"
+      group: "{{ og_group }}"
+      home: "/home/{{ og_user }}"
+  loop_control:
+    loop_var: og_ssh

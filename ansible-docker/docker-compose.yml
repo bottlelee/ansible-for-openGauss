@@ -3,17 +3,15 @@ version: "3.3"
 services:
   ansible:
     image: haibin.lee/ansible
-    container_name: ansible
-    hostname: ansible-in-docker
+    container_name: ansible-for-opengauss
+    hostname: ansible-for-opengauss
     restart: always
     build:
       context: .
     working_dir: /workdir
     volumes:
-      - "./inventories:/etc/ansible/inventories"
+      - "../inventories:/etc/ansible/inventories"
       - "../:/workdir"
-      - "./ansible.cfg:/etc/ansible/ansible.cfg"
-      - "~/.vagrant.d/insecure_private_key:/root/.vagrant.d/insecure_private_key"
     entrypoint:
       - "crond"
       - "-f"

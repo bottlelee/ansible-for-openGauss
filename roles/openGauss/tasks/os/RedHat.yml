@@ -1,5 +1,5 @@
 - name: Disable firewalld
-  service:
+  ansible.builtin.service:
     name: firewalld
     state: stopped
     enabled: false
@@ -9,6 +9,7 @@
     path: "/etc/sysconfig/network-scripts/ifcfg-{{ og_back_iface }}"
     section: null
     option: MTU
-    value: "{{ combined_vars.openGauss_env.iface_mtu }}"
+    value: "{{ combined_vars.opengauss_env.iface_mtu }}"
     backup: true
     no_extra_spaces: true
+    mode: "0600"

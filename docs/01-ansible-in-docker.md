@@ -1,16 +1,12 @@
 进入 `ansible-docker` 目录，按以下步骤创建容器。
 
-# 制作 ansible 容器镜像
+# 制作并启动 ansible 容器
 
-`docker-compose build`
-
-# 启动 ansible 容器
-
-`docker-compose up -d`
+`docker-compose up -d --build`
 
 # 进入容器环境
 
-`docker exec -it ansible byobu`
+`docker exec -it ansible-for-opengauss byobu`
 
 # 声明
 

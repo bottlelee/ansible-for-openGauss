@@ -1,0 +1,12 @@
+- name: Install dependencies
+  ansible.builtin.package:
+    name:
+      - libnsl
+      - readline-devel
+    use: "{{ custom_pkg_mgr | default(ansible_pkg_mgr) }}"
+
+- name: Create soft link
+  ansible.builtin.file:
+    src: /lib64/libreadline.so.8
+    dest: "/lib64/libreadline.so.7"
+    state: link

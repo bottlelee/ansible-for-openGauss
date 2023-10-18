@@ -2,12 +2,11 @@
 
 自动部署 openGauss，根据分组定义，自适应部署单点、一主一从、一主多从以及级联节点等架构模式。
 
-目前仅支持初次部署，不支持对集群架构做变更。
-
 # 已适配的系统
 
 * x86_64
   * CentOS 7.6
+  * openEuler 20.03 LTS SP3
 
 # 已适配的 openGauss 版本
 
@@ -26,7 +25,7 @@
     默认变量
 
     ```
-    openGauss_env:
+    opengauss_env:
       user_name: omm
       user_group: dbgrp
     ```
@@ -34,7 +33,7 @@
     自定义变量文件 `{{ inventory_dir }}/group_vars/openGauss.yml`
 
     ```
-    openGauss_env:
+    opengauss_env:
       user_name: ommo
     ```
 
@@ -42,7 +41,7 @@
 
     ```
     combined_vars:
-      openGauss_env:
+      opengauss_env:
         user_name: ommo
         user_group: dbgrp
     ```
@@ -53,6 +52,11 @@
 * [创建 Ansible 容器](docs/01-ansible-in-docker.md)，使用 docker 快速搭建一个可以运行本项目的 ansible 环境，降低对操作系统的依赖。
 * [详细配置](docs/02-pre-set.md)
 * [开始部署](docs/03-deploy.md)
+* [节点扩容](docs/04-expansion.md)
+
+# 更新日志
+
+* 2023-10-13: 支持集群扩容。
 
 # 开发指南
 

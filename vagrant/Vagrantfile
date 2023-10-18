@@ -1,0 +1,42 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+
+  if Vagrant.has_plugin?("vagrant-vbguest") then
+    config.vbguest.auto_update = false
+  end
+
+  config.ssh.insert_key = false
+
+  # 这个设置针对无法被 vagrant 识别的国产系统，例如 openEuler。强制指定按哪个通用系统来配置。
+  config.vm.guest = "centos"
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = 4096
+    vb.cpus = 4
+    vb.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
+    vb.linked_clone = true
+    vb.check_guest_additions = false
+  end
+
+  config.vm.provision "shell" do |s|
+    s.inline = <<-SHELL
+    sed -i "s|PasswordAuthentication no|PasswordAuthentication yes|g" /etc/ssh/sshd_config
+    /bin/systemctl restart sshd.service
+    SHELL
+  end
+
+  #Disabling the default /vagrant share
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+
+  # How many vm do you want?
+  N = 9
+
+  (1..N).each do |i|
+    config.vm.define "opengauss#{i}" do |node|
+      node.vm.box = "openeuler2003_x64"
+      node.vm.network "private_network", ip: "192.168.56.#{10+i}"
+    end
+  end
+end

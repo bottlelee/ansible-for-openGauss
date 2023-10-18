@@ -34,6 +34,6 @@
 - include_tasks: "{{ item }}"
   with_first_found:
     - files:
-        - "{{ ansible_distribution }}.yml"
-        - "{{ ansible_os_family }}.yml"
+        - "os/{{ ansible_distribution }}.yml"
+        - "os/{{ ansible_os_family }}.yml"
       skip: true

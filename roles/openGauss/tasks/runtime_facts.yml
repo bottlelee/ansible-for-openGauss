@@ -1,19 +1,27 @@
-- name: Set runtime facts
-  set_fact:
-    og_user: "{{ combined_vars.openGauss_env.user_name }}"
-    og_group: "{{ combined_vars.openGauss_env.user_group }}"
-    og_user_pass: "{{ combined_vars.openGauss_env.user_pass }}"
-    og_home: "{{ combined_vars.openGauss_home }}"
-    og_paths: "{{ combined_vars.openGauss_paths }}"
-    og_pkg_url: "{{ combined_vars.openGauss_download[ansible_architecture][ansible_distribution + '_' + ansible_distribution_major_version] }}"
-    og_ver: "{{ combined_vars.openGauss_version }}"
-    og_ip_list: "{{ groups['openGauss'] | sort | join(',') }}"
+- name: Set runtime facts - 1
+  ansible.builtin.set_fact:
+    og_user: "{{ combined_vars.opengauss_env.user_name }}"
+    og_group: "{{ combined_vars.opengauss_env.user_group }}"
+    og_user_pass: "{{ combined_vars.opengauss_env.user_pass }}"
+    og_home: "{{ combined_vars.opengauss_home }}"
+    og_paths: "{{ combined_vars.opengauss_paths }}"
+    og_pkg_url: >-
+      {{ combined_vars.opengauss_download
+        [ansible_architecture]
+        [(ansible_distribution | replace(' ', '_') | lower)
+          + '_'
+          + ansible_distribution_major_version] }}
+    og_ver: "{{ combined_vars.opengauss_version }}"
+    og_hostname: "og{{ inventory_hostname | ipaddr('int') }}"
+    og_data_path: "{{ combined_vars.opengauss_paths.dataPath }}"
+    og_all_nodes: "{{ groups['openGauss'] | sort }}"
+    og_master: "{{ groups['opengauss_master'] | first }}"
+
+- name: Set runtime facts - 2
+  ansible.builtin.set_fact:
+    og_upload_path: "/opt/software/{{ og_pkg_url | dirname | basename }}_{{ og_pkg_url | basename | replace('.tar.gz', '') }}"
     og_host_list: >-
-      {%- for cm_node in (groups['openGauss'] | sort) -%}      
-        opengauss{{ loop.index }}{{ (loop.nextitem is defined) | ternary(',', '') }}
+      {%- for node in og_all_nodes -%}
+        og{{ node | ipaddr('int') }}{{ (loop.nextitem is defined) | ternary(',', '') }}
       {%- endfor -%}
-    og_hostname: >-
-      {%- for cm_node in (groups['openGauss'] | sort) if cm_node == inventory_hostname -%}      
-        opengauss{{ loop.index }}
-      {%- endfor -%}
-    og_data_path: "{{ combined_vars.openGauss_paths.dataPath }}"
+    og_ip_list: "{{ og_all_nodes | join(',') }}"
