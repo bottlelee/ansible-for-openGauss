@@ -51,16 +51,10 @@
     - name: Start pre tasks
       ansible.builtin.import_tasks: pre_tasks.yml
 
-    - name: Start deploy
+    - name: Start expand
       run_once: true
       delegate_to: "{{ og_master }}"
       ansible.builtin.import_tasks: deploy/main.yml
 
 - name: Run post tasks
   ansible.builtin.import_tasks: post_tasks.yml
-
-- name: Generate reports
-  ansible.builtin.import_tasks: report.yml
-  tags:
-    - never
-    - report

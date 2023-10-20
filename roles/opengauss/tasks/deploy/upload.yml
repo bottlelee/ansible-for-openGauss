@@ -6,9 +6,9 @@
         state: directory
         mode: "0755"
 
-    - name: "Extracting {{ og_pkg_url | basename }}"
+    - name: "Extracting {{ og_pkg_name }}"
       ansible.builtin.unarchive:
-        src: "{{ playbook_dir }}/downloaded_files/{{ og_pkg_url | basename }}"
+        src: "{{ playbook_dir }}/downloaded_files/{{ og_pkg_name }}"
         dest: "{{ og_upload_path }}/"
 
     - name: "Extracting {{ og_pkg_url | basename | replace('all', 'om') }}"
@@ -32,7 +32,7 @@
         - name: Downloading
           ansible.builtin.get_url:
             url: "{{ og_pkg_url }}"
-            dest: "{{ playbook_dir }}/downloaded_files/{{ og_pkg_url | basename }}"
+            dest: "{{ playbook_dir }}/downloaded_files/{{ og_pkg_name }}"
             mode: "0644"
 
     - name: Repeat tasks

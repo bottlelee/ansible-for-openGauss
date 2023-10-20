@@ -29,3 +29,12 @@
       ansible.builtin.debug:
         msg: |
           {{ cluster_status.stdout_lines }}
+
+    - name: "Create report.md in {{ inventory_dir }}"
+      ansible.builtin.template:
+        src: report.md.j2
+        dest: "{{ inventory_dir }}/report.md"
+        backup: true
+        mode: "0644"
+      delegate_to: localhost
+      become: false

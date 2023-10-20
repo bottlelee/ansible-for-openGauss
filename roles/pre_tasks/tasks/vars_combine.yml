@@ -10,10 +10,11 @@
     #     msg: "{{ temp_role_vars }}"
 
     - name: Assembling group vars files
-      assemble:
-        src: "{{ inventory_dir }}/group_vars"
+      ansible.builtin.assemble:
+        src: "{{ inventory_dir }}/group_vars/"
         dest: "{{ inventory_dir }}/assembled_vars/{{ group_names | hash('md5') }}.yml"
         regexp: "({{ group_names | join('|') }})"
+        mode: "0644"
       delegate_to: localhost
       become: false
       run_once: true
@@ -27,7 +28,7 @@
     #     msg: "{{ temp_group_vars }}"
 
     - name: Combine vars from role and groups
-      set_fact:
+      ansible.builtin.set_fact:
         combined_vars: "{{ role_vars | combine(group_vars, recursive=true) }}"
       vars:
         role_vars: "{{ lookup('vars', 'temp_role_vars') }}"
@@ -40,11 +41,13 @@
     # - meta: end_play
 
   rescue:
-    - name: "Create {{ inventory_dir }}/assembled_vars"
-      file:
+    - name: "Create 'assembled_vars' path in {{ inventory_dir }}"
+      ansible.builtin.file:
         path: "{{ inventory_dir }}/assembled_vars"
         state: directory
+        mode: "0644"
       delegate_to: localhost
       become: false
 
-    - include_tasks: vars_combine.yml
+    - name: Repeat tasks
+      ansible.builtin.include_tasks: vars_combine.yml

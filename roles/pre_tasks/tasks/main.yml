@@ -2,36 +2,40 @@
 # tasks file for pre-tasks
 
 - name: Set timezone
-  set_fact:
+  ansible.builtin.set_fact::
     global_timezone: "Asia/Shanghai"
   when: global_timezone is not defined
 
-- block:
+- name: Set network vars
+  when: "global_bond_iface is not defined"
+  block:
     - name: Get iface name when 'global_bond_iface' is not defined
-      shell: "ip a | grep {{ ansible_host | default(inventory_hostname) }} | awk '{print $NF}'"
+      ansible.builtin.shell: >-
+        set -o pipefail &&
+          ip a | grep {{ ansible_host | default(inventory_hostname) }} | awk '{print $NF}'
       changed_when: false
       register: iface_name
 
     - name: Set 'global_bond_iface' var
-      set_fact:
+      ansible.builtin.set_fact::
         global_bond_iface: "{{ iface_name.stdout | trim }}"
         global_bond_ip: "{{ ansible_host | default(inventory_hostname) }}"
-  when: "global_bond_iface is not defined"
 
 - name: "Set `inventory_dir` equal to `playbook_dir`"
-  set_fact:
+  ansible.builtin.set_fact::
     inventory_dir: "{{ playbook_dir }}"
   when:
     - inventory_dir is not defined
     - playbook_dir is defined
 
 - name: Set python vars
-  set_fact:
+  ansible.builtin.set_fact::
     python_name: "{{ (ansible_python_interpreter | default(discovered_interpreter_python)) | basename }}"
     pip_name: "{{ (ansible_python_interpreter | default(discovered_interpreter_python)) | basename | replace('python', 'pip') }}"
 
 # This task must be the last
-- include_tasks: "{{ item }}"
+- name: Config system by distribuion and os family
+  ansible.builtin.include_tasks: "{{ item }}"
   with_first_found:
     - files:
         - "os/{{ ansible_distribution }}.yml"

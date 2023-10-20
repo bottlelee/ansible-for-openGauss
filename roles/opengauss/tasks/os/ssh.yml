@@ -1,18 +1,18 @@
 - name: Config ssh on host
   block:
-    - name: "Create {{ og_ssh.home }}/.ssh"
-      file:
+    - name: "Create '.ssh' under {{ og_ssh.home }}"
+      ansible.builtin.file:
         path: "{{ og_ssh.home }}/.ssh"
         state: directory
-        mode: 0700
+        mode: "0700"
         owner: "{{ og_ssh.user }}"
         group: "{{ og_ssh.group }}"
 
     - name: Upload ssh keys
-      copy:
+      ansible.builtin.copy:
         src: "{{ og_key }}"
         dest: "{{ og_ssh.home }}/.ssh/{{ og_key | basename | replace('opengauss_', '') }}"
-        mode: 0400
+        mode: "0400"
         owner: "{{ og_ssh.user }}"
         group: "{{ og_ssh.group }}"
         backup: true
@@ -24,28 +24,28 @@
       register: keys_list
 
     - name: Failed when no keys founded
-      fail:
+      ansible.builtin.fail:
         msg: "SSH keys not existed"
       when: "keys_list.skipped"
 
-    # - name: Add authorized key
-    #   authorized_key:
-    #     user: "{{ og_ssh.user }}"
-    #     state: present
-    #     key: "{{ lookup('file', pub_key) }}"
-    #   with_fileglob:
-    #     - "{{ inventory_dir }}/credentials/opengauss_id*.pub"
-    #   loop_control:
-    #     loop_var: pub_key
-    #     label: "{{ og_ssh.home }}/.ssh/{{ pub_key | basename | replace('opengauss_', '') }}"
+    - name: Permit root login
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^PermitRootLogin"
+        line: "PermitRootLogin yes"
+        backup: true
 
   rescue:
     - name: Generate ssh keys
+      delegate_to: localhost
+      become: false
+      run_once: true
       block:
-        - name: "Create {{ inventory_dir }}/credentials"
-          file:
+        - name: "Create local path 'credentials' under {{ inventory_dir }}"
+          ansible.builtin.file:
             path: "{{ inventory_dir }}/credentials"
             state: directory
+            mode: "0755"
 
         - name: Generate opengauss_id_om
           openssh_keypair:
@@ -57,8 +57,8 @@
           openssh_keypair:
             path: "{{ inventory_dir }}/credentials/opengauss_id_rsa"
             regenerate: never
-      delegate_to: localhost
-      become: false
-      run_once: true
 
-    - include_tasks: os/ssh.yml
+
+    - name: Repeat tasks
+      ansible.builtin.include_tasks:
+        file: os/ssh.yml

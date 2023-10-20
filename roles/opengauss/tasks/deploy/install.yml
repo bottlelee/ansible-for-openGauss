@@ -11,14 +11,15 @@
     - "{{ inventory_dir }}/templates/cluster_config.xml.j2"
     - "cluster_config.xml.j2"
 
-- debug:
+- name: Does the cluster going to expand?
+  ansible.builtin.debug:
     msg: "{{ og_expansion }}"
 
 - name: First time deploy
   when: "not og_expansion"
   block:
     - name: Starting pre install
-      ansible.builtin.command: "python3 gs_preinstall -U {{ og_user }} -G {{ og_group }} -X {{ og_upload_path }}/cluster_config.xml --non-interactive"
+      ansible.builtin.command: "./gs_preinstall -U {{ og_user }} -G {{ og_group }} -X {{ og_upload_path }}/cluster_config.xml --non-interactive"
       changed_when: false
       args:
         chdir: "{{ og_upload_path }}/script"
@@ -26,12 +27,13 @@
     - name: Deploy openGauss
       ansible.builtin.shell: |
         . /home/{{ og_user }}/.bashrc && \
-          python3 gs_install \
+          gs_install \
           -X {{ og_upload_path }}/cluster_config.xml \
-          --gsinit-parameter="--pwpasswd={{ combined_vars.opengauss_db_set.root_pass }}"
+          --gsinit-parameter="--pwpasswd={{ combined_vars.opengauss_db_set.root_pass }}" \
+          --gsinit-parameter="--locale={{ og_locale }}"
       changed_when: false
-      args:
-        chdir: "{{ og_home }}/install/om/script"
+      # args:
+      #   chdir: "{{ og_home }}/install/om/script"
       become_user: "{{ og_user }}"
 
 - name: Expand cluster
@@ -46,7 +48,7 @@
     - name: Starting expand
       ansible.builtin.shell: >-
         . /home/{{ og_user }}/.bashrc &&
-          python3 gs_expansion -U {{ og_user }} -G {{ og_group }} -X {{ og_upload_path }}/cluster_config.xml -h {{ expansion_list }}
+          ./gs_expansion -U {{ og_user }} -G {{ og_group }} -X {{ og_upload_path }}/cluster_config.xml -h {{ expansion_list }}
       args:
         chdir: "{{ og_upload_path }}/script"
       vars:

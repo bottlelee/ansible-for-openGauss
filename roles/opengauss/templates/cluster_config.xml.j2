@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ROOT>
+  <CLUSTER>
+    <PARAM name="clusterName" value="{{ combined_vars.opengauss_env.clusterName }}" />
+    <PARAM name="nodeNames" value="{{ og_host_list }}"/>
+    <PARAM name="gaussdbAppPath" value="{{ combined_vars.opengauss_paths.gaussdbAppPath }}" />
+    <PARAM name="gaussdbLogPath" value="{{ combined_vars.opengauss_paths.gaussdbLogPath }}" />
+    <PARAM name="tmpMppdbPath" value="{{ combined_vars.opengauss_paths.tmpMppdbPath }}"/>
+    <PARAM name="gaussdbToolPath" value="{{ combined_vars.opengauss_paths.gaussdbToolPath }}" />
+    <PARAM name="corePath" value="{{ combined_vars.opengauss_paths.corePath }}"/>
+    <PARAM name="backIp1s" value="{{ og_ip_list }}"/>
+  </CLUSTER>
+
+  <DEVICELIST>
+{% for node in og_all_nodes %}
+    <DEVICE sn="og{{ node | ipaddr('int') }}">
+      <PARAM name="name" value="og{{ node | ipaddr('int') }}"/>
+      <PARAM name="azName" value="{{ combined_vars.opengauss_env.azName | default('AZ1') }}"/>
+      <PARAM name="azPriority" value="{{ hostvars[node]['azPriority'] | default('1') }}"/>
+      <PARAM name="backIp1" value="{{ hostvars[node]['backIp1'] | default(hostvars[node]['inventory_hostname']) }}"/>
+      <PARAM name="sshIp1" value="{{ hostvars[node]['inventory_hostname'] }}"/>
+{% if node == og_master %}
+  {{ lookup('template', 'cluster_master.xml.j2') }}
+{% elif not og_expansion %}
+  {{ lookup('template', 'cluster_replicas.xml.j2') }}
+{% else %}
+  {{ lookup('template', 'cluster_replicas.xml.j2') }}
+{% endif %}
+    </DEVICE>
+{% endfor %}
+  </DEVICELIST>
+</ROOT>

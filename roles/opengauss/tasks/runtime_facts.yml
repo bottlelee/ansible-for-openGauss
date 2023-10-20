@@ -1,0 +1,31 @@
+- name: Set runtime facts - 1
+  ansible.builtin.set_fact:
+    og_user: "{{ combined_vars.opengauss_env.user_name }}"
+    og_group: "{{ combined_vars.opengauss_env.user_group }}"
+    og_user_pass: "{{ combined_vars.opengauss_env.user_pass }}"
+    og_home: "{{ combined_vars.opengauss_home }}"
+    og_paths: "{{ combined_vars.opengauss_paths }}"
+    og_ver: "{{ combined_vars.opengauss_version }}"
+    og_hostname: "og{{ inventory_hostname | ipaddr('int') }}"
+    og_data_path: "{{ combined_vars.opengauss_paths.dataPath }}"
+    og_all_nodes: "{{ groups['opengauss'] | sort }}"
+    og_master: "{{ groups['opengauss_master'] | first }}"
+    og_replicas: "{{ (groups['opengauss_follower'] + groups['opengauss_cascade']) | sort }}"
+    og_cascade: "{{ ('opengauss_cascade' in group_names) | ternary('on', 'off') }}"
+    og_locale: "{{ combined_vars.opengauss_env.locale | default(ansible_env.LANG) }}"
+
+- name: Set runtime facts - 2
+  ansible.builtin.set_fact:
+    og_upload_path: "/opt/software/openGauss"
+    og_host_list: >-
+      og{{ og_master | ipaddr('int') }}{% for node in og_replicas %},og{{ node | ipaddr('int') }}{% endfor %}
+    og_ip_list: >-
+      {{ og_master }}{% for node in og_replicas %},{{ node }}{% endfor %}
+    og_pkg_url: >-
+      {{ combined_vars.opengauss_download
+        [ansible_architecture]
+        [(ansible_distribution | replace(' ', '_') | lower)
+          + '_'
+          + ansible_distribution_major_version]
+          | replace(opengauss_version, og_ver) }}
+    og_pkg_name: "openGauss_{{ ansible_distribution }}_{{ ansible_distribution_version }}_{{ ansible_architecture }}.tar.gz"

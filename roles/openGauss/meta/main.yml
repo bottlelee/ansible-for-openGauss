@@ -1,4 +1,0 @@
-dependencies: 
-  - name: pre-tasks
-    tags:
-      - always

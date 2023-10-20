@@ -8,7 +8,7 @@
 
 1. 1 主 4 从 1 级联的架构，十分钟内部署完成（不含安装包的下载时间）。
 1. 自动匹配 CPU 架构以及操作系统。
-1. 支持自定义 cluster_config.xml.j2 模板，优先使用 `{{ inventory_dir }}/templates/openGauss/cluster_config.xml.j2`。
+1. 支持自定义 cluster_config.xml.j2 模板，优先使用 `{{ inventory_dir }}/templates/opengauss/cluster_config.xml.j2`。
 1. 默认自动生成数据库管理员密码，也可自定义变量进行替换。全程自动化，无交互步骤。
 1. 部署完成后，从 `/root/.ssh/authorized_keys` 里移除相关公钥，而非删除 `/root/.ssh` 目录。
 1. 本地生成的公密钥、账号密码，均存放在 `{{ inventory_dir }}/credentials` 目录内。
@@ -22,7 +22,7 @@
       user_group: dbgrp
     ```
 
-    自定义变量文件 `{{ inventory_dir }}/group_vars/openGauss.yml`
+    自定义变量文件 `{{ inventory_dir }}/group_vars/opengauss.yml`
 
     ```
     opengauss_env:
@@ -57,7 +57,7 @@ master 组仅可以配置 1 台机器。follower 可以多台。cascade 可选�
 [opengauss_cascade]
 192.168.56.13
 
-[openGauss:children]
+[opengauss:children]
 opengauss_master
 opengauss_follower
 opengauss_cascade
@@ -67,7 +67,7 @@ opengauss_cascade
 
 ```
 - name: Deploy openGauss database
-  hosts: openGauss
+  hosts: opengauss
   become: true
   roles:
     - openGauss

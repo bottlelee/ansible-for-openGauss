@@ -87,10 +87,38 @@
   changed_when: false
   register: backiface
 
-- name: "The backIp1's is {{ backiface.stdout | trim }}"
+- name: "The backIp1 interface is {{ backiface.stdout | trim }}"
   ansible.builtin.set_fact:
     og_back_iface: "{{ backiface.stdout | trim }}"
 
 - name: "Set MTU on the fly: {{ combined_vars.opengauss_env.iface_mtu }}"
   ansible.builtin.command: "ifconfig {{ og_back_iface }} mtu {{ combined_vars.opengauss_env.iface_mtu }}"
   changed_when: false
+
+- name: Disable swap
+  when:
+    - "combined_vars.opengauss_env.swap_off"
+    - "ansible_swaptotal_mb > 0"
+  block:
+    - name: Find swap line in /etc/fstab
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail &&
+            grep 'swap' /etc/fstab | grep -v '^#'
+      changed_when: false
+      register: swap_st
+
+    - name: Disable swap in /etc/fstab
+      ansible.builtin.replace:
+        path: /etc/fstab
+        regexp: "^{{ line }}"
+        replace: "#{{ line }}"
+      loop: "{{ swap_st.stdout_lines }}"
+      loop_control:
+        loop_var: line
+      when: "swap_st.stdout_lines is truthy"
+
+    - name: Disable swap by command
+      ansible.builtin.command:
+        swapoff -a
+      changed_when: false

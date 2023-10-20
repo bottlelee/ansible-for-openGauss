@@ -1,0 +1,6 @@
+{% if (groups['opengauss'] | count) > 2 %}
+    <!-- CLUSTER MANAGER -->
+    <PARAM name="cmServerPortStandby" value="{{ combined_vars.opengauss_env.cmServerPortStandby }}"/>
+    <PARAM name="cmDir" value="{{ og_data_path }}/cmserver"/>
+    <PARAM name="cascadeRole" value="{{ og_cascade }}"/>
+{% endif %}
