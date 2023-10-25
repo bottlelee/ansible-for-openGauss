@@ -6,16 +6,25 @@
         state: directory
         mode: "0755"
 
-    - name: "Extracting {{ og_pkg_name }}"
+    - name: "Uploading {{ og_pkg_name }}"
       ansible.builtin.unarchive:
         src: "{{ playbook_dir }}/downloaded_files/{{ og_pkg_name }}"
         dest: "{{ og_upload_path }}/"
+        list_files: true
+        creates: "{{ og_upload_path }}/version.cfg"
+      register: og_upload
 
-    - name: "Extracting {{ og_pkg_url | basename | replace('all', 'om') }}"
+    - name: "Extracting om tar file"
       ansible.builtin.unarchive:
         remote_src: true
-        src: "{{ og_upload_path }}/{{ og_pkg_url | basename | replace('all', 'om') }}"
+        src: "{{ og_upload_path }}/{{ file }}"
         dest: "{{ og_upload_path }}/"
+        creates: "{{ og_upload_path }}/script/gs_om"
+      loop: "{{ og_upload.files | default([]) }}"
+      loop_control:
+        loop_var: file
+      when:
+        - "'om.tar.gz' in file"
 
   rescue:
     - name: "Get {{ og_pkg_url }}"

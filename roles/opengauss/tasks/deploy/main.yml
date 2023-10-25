@@ -1,5 +1,6 @@
 - name: Scan hosts key
-  ansible.builtin.command: "ssh-keyscan -p {{ host_port }} {{ node }},og{{ node | ipaddr('int') }}"
+  ansible.builtin.command: >-
+    ssh-keyscan -p {{ host_port }} {{ node }},og{{ node | ipaddr('int') }}
   changed_when: false
   loop: "{{ og_all_nodes }}"
   loop_control:
@@ -9,7 +10,8 @@
   register: known_host_keys
 
 - name: Config known hosts
-  ansible.builtin.include_tasks: deploy/known_hosts.yml
+  ansible.builtin.include_tasks:
+    file: deploy/known_hosts.yml
   with_items:
     - user: root
       group: root
@@ -21,19 +23,27 @@
     loop_var: og_ssh
 
 - name: Config authorized keys
-  ansible.builtin.include_tasks: deploy/add_auth.yml
+  ansible.builtin.include_tasks:
+    file: deploy/add_auth.yml
   loop: "{{ og_all_nodes }}"
   loop_control:
     loop_var: node
 
-- name: Check gs_om command
-  ansible.builtin.shell: "which gs_om || echo 'not installed'"
-  changed_when: false
-  register: gs_com_st
+- name: Starting deploy or expand
+  delegate_to: "{{ og_master }}"
+  block:
+    - name: Check gs_om command
+      ansible.builtin.command:
+        cmd: which gs_om
+      become_user: "{{ og_user }}"
+      changed_when: false
 
-- name: Upload packages
-  ansible.builtin.import_tasks: deploy/upload.yml
-  when: "'not installed' in gs_com_st.stdout_lines"
+  rescue:
+    - name: Upload packages
+      ansible.builtin.import_tasks:
+        file: deploy/upload.yml
 
-- name: Start install
-  ansible.builtin.import_tasks: deploy/install.yml
+  always:
+    - name: In progressing
+      ansible.builtin.import_tasks:
+        file: deploy/install.yml

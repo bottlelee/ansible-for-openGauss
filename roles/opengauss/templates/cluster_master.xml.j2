@@ -1,19 +1,26 @@
-{% if (groups['opengauss'] | count) > 2 %}
-    <!-- CLUSTER MANAGER -->
-    <PARAM name="cmsNum" value="1"/>
-    <PARAM name="cmServerPortBase" value="{{ combined_vars.opengauss_env.cmServerPortBase }}"/>
-    <PARAM name="cmServerListenIp1" value="{{ og_ip_list }}"/>
-    <PARAM name="cmServerHaIp1" value="{{ og_ip_list }}"/>
-    <PARAM name="cmServerlevel" value="1"/>
-    <PARAM name="cmServerRelation" value="{{ og_host_list }}"/>
-    <PARAM name="cmDir" value="{{ og_data_path }}/cmserver"/>
+    <!-- CLUSTER PRIMARY -->
+    <DEVICE sn="og{{ og_master | ipaddr('int') }}">
+      <PARAM name="name" value="og{{ og_master | ipaddr('int') }}"/>
+      <PARAM name="instanceId" value="{{ og_master | ipaddr('int') }}"/>
+      <PARAM name="azName" value="{{ og_cluster_config.az_name }}"/>
+      <PARAM name="azPriority" value="{{ og_cluster_config.az_priority }}"/>
+      <PARAM name="backIp1" value="{{ og_master }}"/>
+      <PARAM name="sshIp1" value="{{ og_master }}"/>
+
+{% if og_cm_enabled %}
+      <!-- CLUSTER MANAGER -->
+      <PARAM name="cmsNum" value="1"/>
+      <PARAM name="cmServerPortBase" value="{{ og_cluster_config.port_base }}"/>
+      <PARAM name="cmServerListenIp1" value="{{ og_expand_cm_ips | default(og_all_ips) }}"/>
+      <PARAM name="cmServerHaIp1" value="{{ og_expand_cm_ips | default(og_all_ips) }}"/>
+      <PARAM name="cmServerlevel" value="1"/>
+      <PARAM name="cmServerRelation" value="{{ og_cm_names | default(og_all_names) }}"/>
+      <PARAM name="cmDir" value="{{ og_data_path }}/cmserver"/>
 {% endif %}
-    <!-- Data Node -->
-    <PARAM name="dataNum" value="1"/>
-    <PARAM name="dataPortBase" value="{{ combined_vars.opengauss_env.dataPortBase }}"/>
-    <PARAM name="dataNode1" value="{{ og_data_path }}/dn
-    {%- for node in og_replicas -%}
-    ,og{{ node | ipaddr('int') }},{{ og_data_path }}/dn
-    {%- endfor -%}
-    "/>
-    <PARAM name="dataNode1_syncNum" value="0"/>
+
+      <!-- Data Node -->
+      <PARAM name="dataNum" value="1"/>
+      <PARAM name="dataPortBase" value="{{ og_cluster_config.port_data }}"/>
+      <PARAM name="dataNode1" value="{{ og_data_nodes | default(og_all_dn_nodes) }}"/>
+      <PARAM name="dataNode1_syncNum" value="{{ og_cluster_config.sync_num }}"/>
+    </DEVICE>

@@ -1,0 +1,121 @@
+- name: Check cluster status
+  block:
+    - name: "Query cluster detail"
+      ansible.builtin.command: >-
+        gs_om -t status --detail
+      changed_when: false
+      register: cluster_detail
+
+  rescue:
+    - name: Start pre tasks
+      ansible.builtin.import_tasks:
+        file: pre_tasks.yml
+
+    - name: Start deploy
+      ansible.builtin.import_tasks:
+        file: deploy/main.yml
+      delegate_to: "{{ og_master }}"
+      run_once: true
+
+- name: Create expansion list
+  loop: "{{ og_replicas }}"
+  when: "item not in cluster_detail.stdout"
+  ansible.builtin.add_host:
+    hostname: "{{ item }}"
+    groups:
+      - opengauss_expand
+
+- name: Expansion list
+  ansible.builtin.debug:
+    msg: "{{ groups['opengauss_expand'] }}"
+
+- name: Prepare cluster expand
+  when: "groups['opengauss_expand'] is defined"
+  block:
+    # - name: Debug
+    #   ansible.builtin.debug:
+    #     msg: "{{ split_line }}"
+    #   loop: "{{ cluster_detail.stdout_lines | sort }}"
+    #   loop_control:
+    #     loop_var: line
+    #   when: "'cmserver' in line"
+    #   vars:
+    #     split_line: "{{ line | regex_replace(' {1,}', '|') | split('|') }}"
+
+    - name: Create current cmserver list
+      loop: "{{ cluster_detail.stdout_lines | sort }}"
+      loop_control:
+        loop_var: line
+      when: "'cmserver' in line"
+      ansible.builtin.add_host:
+        hostname: "{{ node_info[3] }}_{{ node_info[1] }}"
+        groups:
+          - opengauss_cm
+        node_ip: "{{ node_info[2] }}"
+      vars:
+        node_info: "{{ line | regex_replace(' {1,}', '|') | split('|') }}"
+
+    - name: Current config manager servers
+      ansible.builtin.debug:
+        msg: "{{ groups['opengauss_cm'] }}"
+
+    # - name: Debug
+    #   ansible.builtin.debug:
+    #     msg: "{{ split_line }}"
+    #   loop: "{{ cluster_detail.stdout_lines | sort }}"
+    #   loop_control:
+    #     loop_var: line
+    #   when: "(og_data_path + '/dn') in line"
+    #   vars:
+    #     split_line: "{{ line | regex_replace(' {1,}', '|') | split('|') }}"
+
+    - name: Create current data node list
+      loop: "{{ cluster_detail.stdout_lines | sort }}"
+      loop_control:
+        loop_var: line
+      when: "(og_data_path + '/dn') in line"
+      ansible.builtin.add_host:
+        hostname: "{{ node_info[3] }}_{{ node_info[1] }}"
+        groups:
+          - opengauss_dn
+        node_ip: "{{ node_info[2] }}"
+        node_name: "{{ node_info[1] }}"
+      vars:
+        node_info: "{{ line | regex_replace(' {1,}', '|') | split('|') }}"
+
+    - name: Current data nodes
+      ansible.builtin.debug:
+        msg: "{{ groups['opengauss_dn'] }}"
+
+
+    - name: Set expansion facts
+      ansible.builtin.set_fact:
+        og_expand_cm_ips: >-
+          {%- for node in (groups['opengauss_cm'] | sort) -%}
+            {{ hostvars[node]['node_ip'] }}
+            {{ (loop.nextitem is defined) | ternary(',', '') }}
+          {%- endfor -%}
+          {%- if groups['opengauss_expand'] is defined -%}
+            {%- for node in (groups['opengauss_expand'] | sort) -%}
+              ,{{ node }}
+            {%- endfor -%}
+          {%- endif -%}
+        og_cm_names: >-
+          {%- for node in (groups['opengauss_cm'] | sort) -%}
+            og{{ hostvars[node]['node_ip'] | ipaddr('int') }}
+            {{ (loop.nextitem is defined) | ternary(',', '') }}
+          {%- endfor -%}
+          {%- if groups['opengauss_expand'] is defined -%}
+            {%- for node in (groups['opengauss_expand'] | sort) -%}
+              ,og{{ node | ipaddr('int') }}
+            {%- endfor -%}
+          {%- endif -%}
+        og_data_nodes: >-
+          {{ og_data_path }}/dn
+          {%- for node in (groups['opengauss_dn'] | sort) if (hostvars[node]['node_ip'] != og_master) -%}
+            ,og{{ hostvars[node]['node_ip'] | ipaddr('int') }},{{ og_data_path }}/dn
+          {%- endfor -%}
+          {%- for node in (groups['opengauss_expand'] | sort) -%}
+            ,og{{ node | ipaddr('int') }},{{ og_data_path }}/dn
+          {%- endfor -%}
+        og_expansion: "{{ groups['opengauss_expand'] is defined }}"

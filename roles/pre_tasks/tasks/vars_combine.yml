@@ -45,7 +45,7 @@
       ansible.builtin.file:
         path: "{{ inventory_dir }}/assembled_vars"
         state: directory
-        mode: "0644"
+        mode: "0755"
       delegate_to: localhost
       become: false
 

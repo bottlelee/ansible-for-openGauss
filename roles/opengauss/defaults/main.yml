@@ -7,11 +7,14 @@ opengauss_version: 5.0.0
 # 安装目录
 opengauss_home: /opt/openGauss
 
+# 是否禁用 bash history。生产环境请设为 true，测试环境为 false。
+og_disable_history: false
+
 # 其它目录，对应 cluster_config.xml 的内容。
 # 具体请看 https://docs.opengauss.org/zh/docs/{{ opengauss_version }}/docs/InstallationGuide/%E5%88%9B%E5%BB%BAXML%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6.html
 opengauss_paths:
   gaussdbAppPath: "{{ opengauss_home }}/install/app"
-  gaussdbLogPath: "/var/log/omm"
+  gaussdbLogPath: "/var/log/"
   tmpMppdbPath: "{{ opengauss_home }}/tmp"
   corePath: "{{ opengauss_home }}/corefile"
   gaussdbToolPath: "{{ opengauss_home }}/install/om"
@@ -26,9 +29,9 @@ opengauss_env:
   clusterName: openGauss
   dataPortBase: 15400
   cmServerPortBase: 15300
-  cmServerPortStandby: 15500
   azName: AZ1
   swap_off: true # 关闭 swap
+  syncNum: 0 # dataNode1_syncNum
   # locale: SQL_ASCII
 
 # 数据库安装配置
@@ -63,5 +66,10 @@ opengauss_download:
     openeuler_20: "{{ ogengauss_dl_server }}/{{ opengauss_version }}/x86_openEuler/openGauss-{{ opengauss_version }}-openEuler-64bit-all.tar.gz"
     centos_7: "{{ ogengauss_dl_server }}/{{ opengauss_version }}/x86/openGauss-{{ opengauss_version }}-CentOS-64bit-all.tar.gz"
 
-# 初始化 og_expansion 值
-og_expansion: false
+# 默认初始值
+og_hostname: "og{{ inventory_hostname | ipaddr('int') }}"
+og_all_nodes: "{{ groups['opengauss'] | sort }}"
+og_master: "{{ groups['opengauss_master'] | first }}"
+og_replicas: "{{ groups['opengauss_replica_nodes'] | sort }}"
+og_upload_path: "/opt/software/openGauss"
+og_cm_enabled: "{{ (groups['opengauss'] | count) > 2 }}"

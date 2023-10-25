@@ -37,6 +37,7 @@
     line: "HISTSIZE=0"
     regex: "^HISTSIZE="
     backup: true
+  when: "og_disable_history"
 
 - name: Install dependencies
   ansible.builtin.package:
@@ -87,7 +88,7 @@
   changed_when: false
   register: backiface
 
-- name: "The backIp1 interface is {{ backiface.stdout | trim }}"
+- name: "Set og_back_iface name"
   ansible.builtin.set_fact:
     og_back_iface: "{{ backiface.stdout | trim }}"
 

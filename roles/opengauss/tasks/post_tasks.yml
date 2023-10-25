@@ -34,7 +34,6 @@
       ansible.builtin.template:
         src: report.md.j2
         dest: "{{ inventory_dir }}/report.md"
-        backup: true
         mode: "0644"
       delegate_to: localhost
       become: false

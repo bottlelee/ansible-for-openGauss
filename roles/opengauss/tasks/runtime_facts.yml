@@ -6,21 +6,23 @@
     og_home: "{{ combined_vars.opengauss_home }}"
     og_paths: "{{ combined_vars.opengauss_paths }}"
     og_ver: "{{ combined_vars.opengauss_version }}"
-    og_hostname: "og{{ inventory_hostname | ipaddr('int') }}"
     og_data_path: "{{ combined_vars.opengauss_paths.dataPath }}"
-    og_all_nodes: "{{ groups['opengauss'] | sort }}"
-    og_master: "{{ groups['opengauss_master'] | first }}"
-    og_replicas: "{{ (groups['opengauss_follower'] + groups['opengauss_cascade']) | sort }}"
-    og_cascade: "{{ ('opengauss_cascade' in group_names) | ternary('on', 'off') }}"
     og_locale: "{{ combined_vars.opengauss_env.locale | default(ansible_env.LANG) }}"
+    og_cluster_config:
+      az_name: "{{ combined_vars.opengauss_env.azName | default('AZ1') }}"
+      az_priority: "{{ combined_vars.opengauss_env.azPriority | default('1') }}"
+      port_base: "{{ combined_vars.opengauss_env.cmServerPortBase }}"
+      port_data: "{{ combined_vars.opengauss_env.dataPortBase }}"
+      sync_num: "{{ combined_vars.opengauss_env.syncNum }}"
 
 - name: Set runtime facts - 2
   ansible.builtin.set_fact:
-    og_upload_path: "/opt/software/openGauss"
-    og_host_list: >-
+    og_all_names: >-
       og{{ og_master | ipaddr('int') }}{% for node in og_replicas %},og{{ node | ipaddr('int') }}{% endfor %}
-    og_ip_list: >-
+    og_all_ips: >-
       {{ og_master }}{% for node in og_replicas %},{{ node }}{% endfor %}
+    og_all_dn_nodes: >-
+      og{{ og_master | ipaddr('int') }},{{ og_data_path }}/dn{% for node in og_replicas %},og{{ node | ipaddr('int') }},{{ og_data_path }}/dn{% endfor %}
     og_pkg_url: >-
       {{ combined_vars.opengauss_download
         [ansible_architecture]
@@ -28,4 +30,4 @@
           + '_'
           + ansible_distribution_major_version]
           | replace(opengauss_version, og_ver) }}
-    og_pkg_name: "openGauss_{{ ansible_distribution }}_{{ ansible_distribution_version }}_{{ ansible_architecture }}.tar.gz"
+    og_pkg_name: "openGauss_{{ og_ver }}_{{ ansible_distribution }}_{{ ansible_distribution_version }}_{{ ansible_architecture }}.tar.gz"

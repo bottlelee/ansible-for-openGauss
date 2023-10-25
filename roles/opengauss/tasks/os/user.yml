@@ -1,9 +1,9 @@
 - name: "Create group '{{ og_group }}'"
-  group:
+  ansible.builtin.group:
     name: "{{ og_group }}"
 
 - name: "Create user '{{ og_user }}'"
-  user:
+  ansible.builtin.user:
     name: "{{ og_user }}"
     group: "{{ og_group }}"
     shell: "/bin/bash"
@@ -11,16 +11,17 @@
     update_password: on_create
 
 - name: "Fix home permission in some cases"
-  file:
+  ansible.builtin.file:
     path: "/home/{{ og_user }}"
     state: directory
     owner: "{{ og_user }}"
     group: "{{ og_group }}"
     recurse: true
 
-- name: "Touch /home/{{ og_user }}/.bashrc"
-  file:
+- name: "Create .bashrc under /home/{{ og_user }}"
+  ansible.builtin.file:
     path: "/home/{{ og_user }}/.bashrc"
     state: touch
     owner: "{{ og_user }}"
     group: "{{ og_group }}"
+    mode: "0644"

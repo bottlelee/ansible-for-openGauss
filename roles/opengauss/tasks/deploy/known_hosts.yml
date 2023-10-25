@@ -1,4 +1,4 @@
-- name: "Update known_hosts"
+- name: "Update .ssh/known_hosts"
   ansible.builtin.blockinfile:
     path: "{{ og_ssh.home }}/.ssh/known_hosts"
     owner: "{{ og_ssh.user }}"
