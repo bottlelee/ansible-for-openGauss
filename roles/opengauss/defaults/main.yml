@@ -24,7 +24,15 @@ opengauss_paths:
 opengauss_env:
   user_name: omm
   user_group: dbgrp
-  user_pass: "{{ lookup('password', inventory_dir + '/credentials/opengauss_omm_pass', chars=['ascii_letters', 'digits']) | password_hash }}"
+  user_pass: >-
+    {{
+      lookup(
+        'password',
+        inventory_dir + '/credentials/opengauss_omm_pass',
+        chars=['ascii_letters', 'digits', 'punctuation'],
+        length=8
+      ) | password_hash
+    }}
   iface_mtu: 8192
   clusterName: openGauss
   dataPortBase: 15400
@@ -37,7 +45,15 @@ opengauss_env:
 # 数据库安装配置
 opengauss_db_set:
   locale: en_US.utf8
-  root_pass: "{{ lookup('password', inventory_dir + '/credentials/opengauss_root_pass', chars=['ascii_letters', 'digits'], length=16) }}"
+  root_pass: >-
+    {{
+      lookup(
+        'password',
+        inventory_dir + '/credentials/opengauss_root_pass',
+        chars=['ascii_letters', 'digits', 'hexdigits'],
+        length=16
+      )
+    }}
 
 # Sysctl 的配置，可自行扩展。
 # 参考官方文档->初始化安装环境->配置操作系统参数
@@ -73,3 +89,4 @@ og_master: "{{ groups['opengauss_master'] | first }}"
 og_replicas: "{{ groups['opengauss_replica_nodes'] | sort }}"
 og_upload_path: "/opt/software/openGauss"
 og_cm_enabled: "{{ (groups['opengauss'] | count) > 2 }}"
+og_expansion: false

@@ -1,3 +1,4 @@
+
     <!-- CLUSTER REPLICA -->
 {% for node in (groups['opengauss_replica_nodes'] | sort) %}
     <DEVICE sn="og{{ node | ipaddr('int') }}">

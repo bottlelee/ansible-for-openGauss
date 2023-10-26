@@ -27,7 +27,7 @@
       ansible.builtin.command: >-
         gs_install \
           -X {{ og_upload_path }}/cluster_config.xml \
-          --gsinit-parameter="--pwpasswd={{ combined_vars.opengauss_db_set.root_pass }}" \
+          --gsinit-parameter="--pwpasswd={{ og_db_pass }}" \
           --gsinit-parameter="--locale={{ og_locale }}"
       changed_when: false
       become_user: "{{ og_user }}"

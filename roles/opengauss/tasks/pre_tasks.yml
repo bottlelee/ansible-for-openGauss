@@ -14,10 +14,15 @@
     - "os/not_supported.yml"
 
 - name: Config user on hosts
-  ansible.builtin.import_tasks: os/user.yml
+  ansible.builtin.include_tasks:
+    file: os/user.yml
+  with_items: "{{ groups['opengauss_expand'] | default(og_all_nodes) }}"
+  loop_control:
+    loop_var: node
 
 - name: Config ssh on hosts
-  ansible.builtin.include_tasks: os/ssh.yml
+  ansible.builtin.include_tasks:
+    file: os/ssh.yml
   with_items:
     - user: root
       group: root

@@ -5,3 +5,4 @@ inventories/opengauss/report*
 vagrant/.vagrant
 vagrant/packer_cache
 vagrant/output*
+log

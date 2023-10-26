@@ -7,6 +7,7 @@
     og_paths: "{{ combined_vars.opengauss_paths }}"
     og_ver: "{{ combined_vars.opengauss_version }}"
     og_data_path: "{{ combined_vars.opengauss_paths.dataPath }}"
+    og_db_pass: "{{ combined_vars.opengauss_db_set.root_pass }}"
     og_locale: "{{ combined_vars.opengauss_env.locale | default(ansible_env.LANG) }}"
     og_cluster_config:
       az_name: "{{ combined_vars.opengauss_env.azName | default('AZ1') }}"
@@ -22,7 +23,7 @@
     og_all_ips: >-
       {{ og_master }}{% for node in og_replicas %},{{ node }}{% endfor %}
     og_all_dn_nodes: >-
-      og{{ og_master | ipaddr('int') }},{{ og_data_path }}/dn{% for node in og_replicas %},og{{ node | ipaddr('int') }},{{ og_data_path }}/dn{% endfor %}
+      {{ og_data_path }}/dn{% for node in og_replicas %},og{{ node | ipaddr('int') }},{{ og_data_path }}/dn{% endfor %}
     og_pkg_url: >-
       {{ combined_vars.opengauss_download
         [ansible_architecture]

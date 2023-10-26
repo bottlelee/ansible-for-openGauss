@@ -15,88 +15,37 @@
     - name: Check cluster status
       ansible.builtin.import_tasks:
         file: deploy/cluster_check.yml
-      become_user: "{{ og_user }}"
-      delegate_to: "{{ og_master }}"
-      run_once: true
 
-- name: Deploy cluster
-  when: og_expansion
-  block:
-    - name: Start pre tasks
+    # - name: Cluster will be expand
+    #   when: og_expansion
+    #   block:
+    #     - name: Start pre tasks
+    #       ansible.builtin.import_tasks:
+    #         file: pre_tasks.yml
+    #       when: "inventory_hostname in groups['opengauss_expand']"
+
+    #     - name: Update /etc/hosts
+    #       ansible.builtin.blockinfile:
+    #         path: /etc/hosts
+    #         marker: "# {mark} OPENGAUSS NODES"
+    #         block: |
+    #           {% for node in og_all_nodes %}
+    #           {{ node }}  og{{ node | ipaddr('int') }} og-{{ node | replace('.', '-') }}
+    #           {% endfor %}
+    #       delegate_to: "{{ node }}"
+    #       loop: "{{ og_all_nodes }}"
+    #       loop_control:
+    #         loop_var: node
+    #       run_once: true
+
+    #     - name: Start deploy
+    #       ansible.builtin.import_tasks:
+    #         file: deploy/main.yml
+    #       delegate_to: "{{ og_master }}"
+    #       run_once: true
+
+  always:
+    - name: Run post tasks
       ansible.builtin.import_tasks:
-        file: pre_tasks.yml
-      when: "inventory_hostname in groups['opengauss_expand']"
-
-    - name: Update /etc/hosts
-      ansible.builtin.blockinfile:
-        path: /etc/hosts
-        marker: "# {mark} OPENGAUSS NODES"
-        block: |
-          {% for node in og_all_nodes %}
-          {{ node }}  og{{ node | ipaddr('int') }} og-{{ node | replace('.', '-') }}
-          {% endfor %}
-      delegate_to: "{{ node }}"
-      loop: "{{ og_all_nodes }}"
-      loop_control:
-        loop_var: node
-      run_once: true
-
-    - name: Start deploy
-      ansible.builtin.import_tasks:
-        file: deploy/main.yml
-      delegate_to: "{{ og_master }}"
-      run_once: true
-
-# - name: Check and create expansion group
-#   ansible.builtin.import_tasks:
-#     file: deploy/cluster_check.yml
-#   become_user: "{{ og_user }}"
-#   # become_flags: "-i"
-#   delegate_to: "{{ og_master }}"
-#   run_once: true
-
-# - name: Expand cluster
-#   when: "groups['og_to_expand'] is defined"
-#   block:
-#     - name: Start pre tasks
-#       ansible.builtin.import_tasks:
-#         file: pre_tasks.yml
-#       when: "inventory_hostname in groups['og_to_expand']"
-
-#     - name: Config ssh on other hosts
-#       ansible.builtin.include_tasks: os/ssh.yml
-#       with_items:
-#         - user: root
-#           group: root
-#           home: /root
-#         - user: "{{ og_user }}"
-#           group: "{{ og_group }}"
-#           home: "/home/{{ og_user }}"
-#       loop_control:
-#         loop_var: og_ssh
-#       when: "inventory_hostname not in groups['og_to_expand']"
-
-#     - name: Config /etc/hosts
-#       ansible.builtin.blockinfile:
-#         path: /etc/hosts
-#         marker: "# {mark} OPENGAUSS NODES"
-#         block: |
-#           {% for node in og_all_nodes %}
-#           {{ node }}  og{{ node | ipaddr('int') }} og-{{ node | replace('.', '-') }}
-#           {% endfor %}
-
-#     - name: Start expand
-#       run_once: true
-#       delegate_to: "{{ og_master }}"
-#       ansible.builtin.include_tasks:
-#         file: deploy/main.yml
-#       vars:
-#         og_expansion: true
-#       loop: "{{ groups['og_to_expand'] }}"
-#       loop_control:
-#         loop_var: og_expand_node
-
-- name: Run post tasks
-  ansible.builtin.import_tasks:
-    file: post_tasks.yml
-  tags: always
+        file: post_tasks.yml
+      tags: always
