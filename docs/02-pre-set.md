@@ -37,7 +37,7 @@ ansible_ssh_port=22
 
 本项目的默认配置参数，存放在 `/workdir/roles/opengauss/defaults/main.yml`，你可以参考这个文件的内容，根据实际需要做一些定制。
 
-*** 但不建议直接修改它，以考虑对不同的服务器仓库进行维护 ***
+***但不建议直接修改它，以考虑对不同的服务器仓库进行维护。***
 
 建议的自定义方法，是将 `/workdir/roles/opengauss/defaults/main.yml` 拷贝到 `/workdir/inventories/opengauss/group_vars/opengauss.yml`，再进行编辑。
 

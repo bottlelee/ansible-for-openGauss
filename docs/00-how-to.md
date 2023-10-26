@@ -2,7 +2,7 @@
 
 如果你对 Ansible 不了解，请看 [创建 Ansible 容器](01-ansible-in-docker.md)，使用 docker 快速搭建一个可以运行本项目的 ansible 环境，降低对操作系统的依赖。
 
-*** 整个说明文档里所提到的文件目录，均以 Ansible 容器环境内为例，不再另外说明。 ***
+***整个说明文档里所提到的文件目录，均以 Ansible 容器环境内为例，不再另外说明。***
 
 # hosts.ini 示例
 

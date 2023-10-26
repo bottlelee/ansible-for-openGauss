@@ -66,9 +66,9 @@ opengauss_follower
 opengauss_cascade
 ```
 
-## 1 主 1 从
+## 1 主 1 备
 
-![1主1从](imgs/1695614019287.png)
+![1主1备](imgs/1695614019287.png)
 
 对应的 hosts.ini 分组编排内容
 
@@ -87,9 +87,9 @@ opengauss_follower
 opengauss_cascade
 ```
 
-## 1 主 1 从 1 级联
+## 1 主 1 备 1 级联
 
-![1主1从1级联](imgs/1695614019263.png)
+![1主1备1级联](imgs/1695614019263.png)
 
 对应的 hosts.ini 分组编排内容
 
@@ -109,9 +109,9 @@ opengauss_follower
 opengauss_cascade
 ```
 
-## 1 主 2 从
+## 1 主 2 备
 
-![1主2从](imgs/1695614019240.png)
+![1主2备](imgs/1695614019240.png)
 
 对应的 hosts.ini 分组编排内容
 
