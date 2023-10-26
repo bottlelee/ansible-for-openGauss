@@ -1,0 +1,50 @@
+- name: Check cluster status
+  block:
+    - name: "Query cluster detail"
+      ansible.builtin.command: >-
+        gs_om -t status --detail
+      changed_when: false
+      register: cluster_detail
+      become_user: "{{ og_user }}"
+      delegate_to: "{{ og_master }}"
+      run_once: true
+
+  rescue:
+    - name: Start pre tasks
+      ansible.builtin.import_tasks:
+        file: pre_tasks.yml
+      become_user: root
+
+    - name: Start deploy
+      ansible.builtin.import_tasks:
+        file: deploy/main.yml
+      delegate_to: "{{ og_master }}"
+      run_once: true
+
+- name: Check expansion status
+  when: "cluster_detail is succeeded"
+  block:
+    - name: Create expansion list
+      ansible.builtin.add_host:
+        hostname: "{{ item }}"
+        groups:
+          - opengauss_expand
+      loop: "{{ og_replicas }}"
+      when: "item not in cluster_detail.stdout"
+      run_once: true
+
+    - name: Start pre tasks
+      ansible.builtin.include_tasks:
+        file: pre_tasks.yml
+      when:
+        - "groups['opengauss_expand'] is defined"
+        - "inventory_hostname in groups['opengauss_expand']"
+
+    - name: Start expansion
+      ansible.builtin.import_tasks:
+        file: expansion.yml
+      vars:
+        og_expansion: true
+      delegate_to: "{{ og_master }}"
+      when: "groups['opengauss_expand'] is defined"
+      run_once: true

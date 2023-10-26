@@ -1,0 +1,49 @@
+- name: Scan hosts key
+  ansible.builtin.command: >-
+    ssh-keyscan -p {{ host_port }} {{ node }},og{{ node | ipaddr('int') }}
+  changed_when: false
+  loop: "{{ og_all_nodes }}"
+  loop_control:
+    loop_var: node
+  vars:
+    host_port: "{{ ansible_ssh_port | default('22') }}"
+  register: known_host_keys
+
+- name: Config known hosts
+  ansible.builtin.include_tasks:
+    file: deploy/known_hosts.yml
+  with_items:
+    - user: root
+      group: root
+      home: /root
+    - user: "{{ og_user }}"
+      group: "{{ og_group }}"
+      home: "/home/{{ og_user }}"
+  loop_control:
+    loop_var: og_ssh
+
+- name: Config authorized keys
+  ansible.builtin.include_tasks:
+    file: deploy/add_auth.yml
+  loop: "{{ og_all_nodes }}"
+  loop_control:
+    loop_var: node
+
+- name: Starting deploy or expand
+  delegate_to: "{{ og_master }}"
+  block:
+    - name: Check gs_om command
+      ansible.builtin.command:
+        cmd: which gs_om
+      become_user: "{{ og_user }}"
+      changed_when: false
+
+  rescue:
+    - name: Upload packages
+      ansible.builtin.import_tasks:
+        file: deploy/upload.yml
+
+  always:
+    - name: In progressing
+      ansible.builtin.import_tasks:
+        file: deploy/install.yml

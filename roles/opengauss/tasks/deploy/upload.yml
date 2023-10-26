@@ -1,0 +1,48 @@
+- name: Upload and extract files
+  block:
+    - name: "Create {{ og_upload_path }}"
+      ansible.builtin.file:
+        path: "{{ og_upload_path }}"
+        state: directory
+        mode: "0755"
+
+    - name: "Uploading {{ og_pkg_name }}"
+      ansible.builtin.unarchive:
+        src: "{{ playbook_dir }}/downloaded_files/{{ og_pkg_name }}"
+        dest: "{{ og_upload_path }}/"
+        list_files: true
+        creates: "{{ og_upload_path }}/version.cfg"
+      register: og_upload
+
+    - name: "Extracting om tar file"
+      ansible.builtin.unarchive:
+        remote_src: true
+        src: "{{ og_upload_path }}/{{ file }}"
+        dest: "{{ og_upload_path }}/"
+        creates: "{{ og_upload_path }}/script/gs_om"
+      loop: "{{ og_upload.files | default([]) }}"
+      loop_control:
+        loop_var: file
+      when:
+        - "'om.tar.gz' in file"
+
+  rescue:
+    - name: "Get {{ og_pkg_url }}"
+      run_once: true
+      delegate_to: localhost
+      become: false
+      block:
+        - name: "Create path 'downloaded_files' in {{ playbook_dir }}"
+          ansible.builtin.file:
+            path: "{{ playbook_dir }}/downloaded_files"
+            state: directory
+            mode: "0755"
+
+        - name: Downloading
+          ansible.builtin.get_url:
+            url: "{{ og_pkg_url }}"
+            dest: "{{ playbook_dir }}/downloaded_files/{{ og_pkg_name }}"
+            mode: "0644"
+
+    - name: Repeat tasks
+      ansible.builtin.include_tasks: deploy/upload.yml

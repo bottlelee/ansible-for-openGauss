@@ -1,6 +1,8 @@
 downloaded_files
 inventories/opengauss/credentials
 inventories/opengauss/assembled_vars
+inventories/opengauss/report*
 vagrant/.vagrant
 vagrant/packer_cache
 vagrant/output*
+log

@@ -1,0 +1,19 @@
+# 集群信息
+
+```
+{% for line in cluster_status.stdout_lines %}
+{{ line }}
+{% endfor %}
+```
+
+# 部署信息
+
+|   |   |
+|---|---|
+| 版本 | {{ og_ver }} |
+| 工作目录 | {{ og_home }} |
+| 数据目录 | {{ og_data_path }} |
+| Linux 用户名称 | {{ og_user }} |
+| Linux 用户密码 | {{ lookup('password', inventory_dir + '/credentials/opengauss_omm_pass', chars=['ascii_letters', 'digits']) }} |
+| Linux 用户组 | {{ og_group }} |
+| 数据库 root 密码 |{{ combined_vars.opengauss_db_set.root_pass }} |

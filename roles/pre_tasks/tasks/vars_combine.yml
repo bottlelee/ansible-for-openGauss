@@ -1,0 +1,54 @@
+- name: Combine default vars and custom vars
+  block:
+    - name: "Include role's defaults vars"
+      ansible.builtin.include_vars:
+        dir: "{{ item }}/defaults"
+        name: "temp_role_vars"
+      loop: "{{ ansible_parent_role_paths }}"
+
+    # - debug:
+    #     msg: "{{ temp_role_vars }}"
+
+    - name: Assembling group vars files
+      ansible.builtin.assemble:
+        src: "{{ inventory_dir }}/group_vars/"
+        dest: "{{ inventory_dir }}/assembled_vars/{{ group_names | hash('md5') }}.yml"
+        regexp: "({{ group_names | sort | join('|') }})"
+        mode: "0644"
+      delegate_to: localhost
+      become: false
+      run_once: true
+
+    - name: "Include group custom vars"
+      ansible.builtin.include_vars:
+        file: "{{ inventory_dir }}/assembled_vars/{{ group_names | hash('md5') }}.yml"
+        name: "temp_group_vars"
+
+    # - debug:
+    #     msg: "{{ temp_group_vars }}"
+
+    - name: Combine vars from role and groups
+      ansible.builtin.set_fact:
+        combined_vars: "{{ role_vars | combine(group_vars, recursive=true) }}"
+      vars:
+        role_vars: "{{ lookup('vars', 'temp_role_vars') }}"
+        group_vars: "{{ lookup('vars', 'temp_group_vars') }}"
+
+
+    # - debug:
+    #     msg: "{{ combined_vars }}"
+
+    # - meta: end_play
+
+  rescue:
+    - name: "Create 'assembled_vars' path in {{ inventory_dir }}"
+      ansible.builtin.file:
+        path: "{{ inventory_dir }}/assembled_vars"
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+      become: false
+      run_once: true
+
+    - name: Repeat tasks
+      ansible.builtin.include_tasks: vars_combine.yml

@@ -1,0 +1,125 @@
+- name: Set hostname
+  ansible.builtin.hostname:
+    name: "{{ og_hostname }}"
+
+- name: Disable selinux
+  ansible.posix.selinux:
+    state: disabled
+  when: "ansible_selinux.status != 'disabled'"
+
+- name: "Set timezone to {{ global_timezone | default('Asia/Shanghai') }}"
+  timezone:
+    name: "{{ global_timezone | default('Asia/Shanghai') }}"
+
+- name: Config /etc/systemd/logind.conf
+  ini_file:
+    path: /etc/systemd/logind.conf
+    section: Login
+    option: RemoveIPC
+    value: "no"
+    mode: "0644"
+
+- name: Config /usr/lib/systemd/system/systemd-logind.service
+  ini_file:
+    path: /usr/lib/systemd/system/systemd-logind.service
+    section: Service
+    option: RemoveIPC
+    value: "no"
+    mode: "0644"
+  notify: Restart systemd-logind.service
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
+
+- name: Disable history command logs
+  ansible.builtin.lineinfile:
+    path: /etc/profile
+    line: "HISTSIZE=0"
+    regex: "^HISTSIZE="
+    backup: true
+  when: "og_disable_history"
+
+- name: Install dependencies
+  ansible.builtin.package:
+    name:
+      - bzip2
+      - expect
+      - net-tools
+      - ntp
+      - tar
+      - gzip
+      - readline-devel
+      - patch
+      - ncurses-devel
+      - libaio-devel
+      - glibc-devel
+      - flex
+      - bison
+      - nano
+      - htop
+    update_cache: true
+    use: "{{ custom_pkg_mgr | default(ansible_pkg_mgr) }}"
+
+- name: Enable ntpd service
+  ansible.builtin.service:
+    name: ntpd
+    state: started
+    enabled: true
+
+- name: Config /etc/hosts
+  ansible.builtin.blockinfile:
+    path: /etc/hosts
+    marker: "# {mark} OPENGAUSS NODES"
+    block: |
+      {% for node in og_all_nodes %}
+      {{ node }}  og{{ node | ipaddr('int') }} og-{{ node | replace('.', '-') }}
+      {% endfor %}
+  delegate_to: "{{ node }}"
+  loop: "{{ og_all_nodes }}"
+  loop_control:
+    loop_var: node
+  run_once: true
+
+- name: Get backIp1's iface name
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      ip a | grep {{ backIp1 | default(inventory_hostname) }} | awk '{print $NF}'
+  changed_when: false
+  register: backiface
+
+- name: "Set og_back_iface name"
+  ansible.builtin.set_fact:
+    og_back_iface: "{{ backiface.stdout | trim }}"
+
+- name: "Set MTU on the fly: {{ combined_vars.opengauss_env.iface_mtu }}"
+  ansible.builtin.command: "ifconfig {{ og_back_iface }} mtu {{ combined_vars.opengauss_env.iface_mtu }}"
+  changed_when: false
+
+- name: Disable swap
+  when:
+    - "combined_vars.opengauss_env.swap_off"
+    - "ansible_swaptotal_mb > 0"
+  block:
+    - name: Find swap line in /etc/fstab
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail &&
+            grep 'swap' /etc/fstab | grep -v '^#'
+      changed_when: false
+      register: swap_st
+
+    - name: Disable swap in /etc/fstab
+      ansible.builtin.replace:
+        path: /etc/fstab
+        regexp: "^{{ line }}"
+        replace: "#{{ line }}"
+      loop: "{{ swap_st.stdout_lines }}"
+      loop_control:
+        loop_var: line
+      when: "swap_st.stdout_lines is truthy"
+
+    - name: Disable swap by command
+      ansible.builtin.command:
+        swapoff -a
+      changed_when: false

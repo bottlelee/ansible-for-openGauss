@@ -1,3 +1,0 @@
-- name: Set custom vars
-  set_fact:
-    custom_pkg_mgr: dnf

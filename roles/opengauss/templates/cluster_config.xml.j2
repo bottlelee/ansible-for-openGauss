@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ROOT>
+  <CLUSTER>
+    <PARAM name="clusterName" value="{{ combined_vars.opengauss_env.clusterName }}" />
+    <PARAM name="nodeNames" value="{{ og_cm_names | default(og_all_names) }}"/>
+    <PARAM name="gaussdbAppPath" value="{{ combined_vars.opengauss_paths.gaussdbAppPath }}" />
+    <PARAM name="gaussdbLogPath" value="{{ combined_vars.opengauss_paths.gaussdbLogPath }}" />
+    <PARAM name="tmpMppdbPath" value="{{ combined_vars.opengauss_paths.tmpMppdbPath }}"/>
+    <PARAM name="gaussdbToolPath" value="{{ combined_vars.opengauss_paths.gaussdbToolPath }}" />
+    <PARAM name="corePath" value="{{ combined_vars.opengauss_paths.corePath }}"/>
+    <PARAM name="backIp1s" value="{{ og_expand_cm_ips | default(og_all_ips) }}"/>
+  </CLUSTER>
+
+  <DEVICELIST>
+
+{{ lookup('template', 'cluster_master.xml.j2') }}
+{% if (og_replicas | count) > 0 %}
+{{ lookup('template', 'cluster_replicas.xml.j2') }}
+{% endif %}
+  </DEVICELIST>
+</ROOT>

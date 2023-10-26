@@ -1,0 +1,47 @@
+- name: "Create cluster_config.xml under {{ og_upload_path }}"
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: "{{ og_upload_path }}/cluster_config.xml"
+    owner: "{{ og_user }}"
+    group: "{{ og_group }}"
+    mode: "0644"
+    backup: true
+    lstrip_blocks: true
+  with_first_found:
+    - "{{ inventory_dir }}/templates/cluster_config.xml.j2"
+    - "cluster_config.xml.j2"
+
+- name: First time deploy
+  when: "not og_expansion"
+  block:
+    - name: Starting pre install
+      ansible.builtin.command: >-
+        {{ og_upload_path }}/script/gs_preinstall \
+          -U {{ og_user }} \
+          -G {{ og_group }} \
+          -X {{ og_upload_path }}/cluster_config.xml \
+          --non-interactive
+      changed_when: false
+
+    - name: Deploy openGauss
+      ansible.builtin.command: >-
+        gs_install \
+          -X {{ og_upload_path }}/cluster_config.xml \
+          --gsinit-parameter="--pwpasswd={{ og_db_pass }}" \
+          --gsinit-parameter="--locale={{ og_locale }}"
+      changed_when: false
+      become_user: "{{ og_user }}"
+      become_flags: "-i"
+
+- name: Starting expand
+  ansible.builtin.shell: |
+    . /home/{{ og_user }}/.bashrc
+
+    {{ og_upload_path }}/script/gs_expansion \
+      -U {{ og_user }} \
+      -G {{ og_group }} \
+      -X {{ og_upload_path }}/cluster_config.xml \
+      -h {{ groups['opengauss_expand'] | join(',') }}
+  become_user: root
+  changed_when: false
+  when: "og_expansion"

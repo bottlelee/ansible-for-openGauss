@@ -27,10 +27,10 @@
 
     这里的 `pansible` 是我预置的命令别名，对应的是 `ansible-playbook`。
 
-1. 部署过程中自动生成的公私钥，以及账号密码，存放在 `ansible-docker/inventories/opengauss/credentials`
+1. 部署过程中自动生成的公私钥，以及账号密码，存放在 `/workdir/inventories/opengauss/credentials`
 
     ```
-    ls -l ansible-docker/inventories/opengauss/credentials/
+    ls -l /workdir/inventories/opengauss/credentials/
     total 24
     -rw------- 1 root root  387  9月24日 14:24 opengauss_id_om
     -rw-r--r-- 1 root root   82  9月24日 14:24 opengauss_id_om.pub
@@ -39,6 +39,10 @@
     -rw------- 1 root root   21  9月24日 13:36 opengauss_omm_pass
     -rw------- 1 root root   17  9月24日 13:36 opengauss_root_pass
     ```
+
+1. 最后生成部署报告文件，存放在 `/workdir/inventories/opengauss/report.md`
+
+    ![Report](imgs/23-10-26_972_1236.png)
 
 # 顺利部署后，你可看到一下输出内容
 
@@ -56,15 +60,15 @@
 
 [opengauss_cascade]
 
-[openGauss:children]
+[opengauss:children]
 opengauss_master
 opengauss_follower
 opengauss_cascade
 ```
 
-## 1 主 1 从
+## 1 主 1 备
 
-![1主1从](imgs/1695614019287.png)
+![1主1备](imgs/1695614019287.png)
 
 对应的 hosts.ini 分组编排内容
 
@@ -77,15 +81,15 @@ opengauss_cascade
 
 [opengauss_cascade]
 
-[openGauss:children]
+[opengauss:children]
 opengauss_master
 opengauss_follower
 opengauss_cascade
 ```
 
-## 1 主 1 从 1 级联
+## 1 主 1 备 1 级联
 
-![1主1从1级联](imgs/1695614019263.png)
+![1主1备1级联](imgs/1695614019263.png)
 
 对应的 hosts.ini 分组编排内容
 
@@ -99,15 +103,15 @@ opengauss_cascade
 [opengauss_cascade]
 192.168.56.16
 
-[openGauss:children]
+[opengauss:children]
 opengauss_master
 opengauss_follower
 opengauss_cascade
 ```
 
-## 1 主 2 从
+## 1 主 2 备
 
-![1主2从](imgs/1695614019240.png)
+![1主2备](imgs/1695614019240.png)
 
 对应的 hosts.ini 分组编排内容
 
@@ -121,7 +125,7 @@ opengauss_cascade
 
 [opengauss_cascade]
 
-[openGauss:children]
+[opengauss:children]
 opengauss_master
 opengauss_follower
 opengauss_cascade

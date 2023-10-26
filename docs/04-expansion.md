@@ -1,12 +1,12 @@
 # 集群扩容
 
-*** ！！！注意！！！ ***
+***！！！注意！！！***
 
-*** 扩容有风险，操作前请仔细阅读 https://docs.opengauss.org/zh/docs/5.0.0/docs/ToolandCommandReference/gs_expansion.html ***
+***实验功能，切勿在生产环境中使用。***
 
-*** 仅建议在部署初期，数据量小的情况下，使用本项目进行扩容。 ***
+***扩容有风险，操作前请仔细阅读 https://docs.opengauss.org/zh/docs/5.0.0/docs/ToolandCommandReference/gs_expansion.html***
 
-## 修改 `ansible-docker\inventories\opengauss\hosts.ini` 文件
+## 修改 `/workdir/inventories/opengauss/hosts.ini` 文件
 
 备机数量不可超过 8 台。
 
