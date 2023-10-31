@@ -1,0 +1,68 @@
+# - name: Upload CM install package
+#   ansible.builtin.unarchive:
+#     src: "{{ playbook_dir }}/downloaded_files/{{ og_pkg_name }}"
+#     dest: "/tmp/"
+#     include: "*-cm.tar.gz"
+#     owner: "{{ og_user }}"
+#     mode: "0644"
+
+- name: Stop cluster
+  ansible.builtin.command:
+    gs_om -t stop
+  changed_when: false
+
+- name: Create initial cmserver list
+  loop: "{{ og_all_nodes }}"
+  loop_control:
+    loop_var: node
+    extended: true
+  ansible.builtin.add_host:
+    hostname: "{{ ansible_loop.index }}_{{ node }}"
+    groups:
+      - opengauss_cm
+    node_ip: "{{ node }}"
+
+- name: "Change ownership to {{ og_upload_path }}"
+  ansible.builtin.file:
+    path: "{{ og_upload_path }}"
+    owner: "{{ og_user }}"
+    recurse: true
+  become_user: root
+
+- name: "Remove /opt/openGauss/install/om/openGauss-5.0.0-openEuler-64bit-cm.tar.gz"
+  ansible.builtin.file:
+    path: "/opt/openGauss/install/om/openGauss-5.0.0-openEuler-64bit-cm.tar.gz"
+    state: absent
+  become_user: root
+  loop: "{{ og_all_nodes }}"
+  delegate_to: "{{ item }}"
+
+- name: "Create cluster_config.xml under {{ og_upload_path }}"
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: "{{ og_upload_path }}/cluster_config.xml"
+    owner: "{{ og_user }}"
+    group: "{{ og_group }}"
+    mode: "0644"
+    backup: true
+    lstrip_blocks: true
+  with_first_found:
+    - "{{ inventory_dir }}/templates/cluster_config.xml.j2"
+    - "cluster_config.xml.j2"
+
+- name: Install CM
+  ansible.builtin.expect:
+    command: "./cm_install -X {{ og_upload_path }}/cluster_config.xml --cmpkg {{ og_upload_path }}/openGauss-5.0.0-openEuler-64bit-cm.tar.gz"
+    responses:
+      (?i)password: "{{ og_ca_pass }}"
+    chdir: "{{ og_home }}/install/app/tool/cm_tool"
+  changed_when: false
+  register: cm_install
+  until: "'CM exists' in cm_install.stdout"
+  retries: 10
+  delay: 6
+
+- name: Start cluster
+  ansible.builtin.command:
+    gs_om -t start
+  changed_when: false

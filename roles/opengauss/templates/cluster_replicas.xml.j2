@@ -7,11 +7,15 @@
       <PARAM name="azPriority" value="{{ combined_vars.opengauss_env.azPriority | default('1') }}"/>
       <PARAM name="backIp1" value="{{ node }}"/>
       <PARAM name="sshIp1" value="{{ node }}"/>
-{% if (groups['opengauss'] | count) > 2 %}
+{% if og_cm_enabled and groups['opengauss_cm'] is defined %}
+
       <!-- CLUSTER MANAGER -->
-      <PARAM name="cmServerPortStandby" value="{{ combined_vars.opengauss_env.cmServerPortBase }}"/>
+      <PARAM name="cmServerPortStandby" value="{{ (og_cluster_config.port_base | int) + 500 }}"/>
       <PARAM name="cmDir" value="{{ og_data_path }}/cmserver"/>
-      <PARAM name="cascadeRole" value="{{ (node in groups['opengauss_cascade']) | ternary('on', 'off') }}"/>
+{% if node in groups['opengauss_cascade'] %}
+
+      <PARAM name="cascadeRole" value="on"/>
+{% endif %}
 {% endif %}
     </DEVICE>
 

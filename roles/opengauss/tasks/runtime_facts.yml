@@ -3,6 +3,7 @@
     og_user: "{{ combined_vars.opengauss_env.user_name }}"
     og_group: "{{ combined_vars.opengauss_env.user_group }}"
     og_user_pass: "{{ combined_vars.opengauss_env.user_pass }}"
+    og_ca_pass: "{{ combined_vars.opengauss_env.ca_file_pass }}"
     og_home: "{{ combined_vars.opengauss_home }}"
     og_paths: "{{ combined_vars.opengauss_paths }}"
     og_ver: "{{ combined_vars.opengauss_version }}"

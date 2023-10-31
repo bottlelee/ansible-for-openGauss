@@ -46,5 +46,16 @@
       vars:
         og_expansion: true
       delegate_to: "{{ og_master }}"
-      when: "groups['opengauss_expand'] is defined"
       run_once: true
+      when: "groups['opengauss_expand'] is defined"
+
+- name: Add CM cluster
+  when:
+    - "cluster_detail is succeeded"
+    - "'cmserver' not in cluster_detail.stdout"
+    - "og_cm_enabled"
+  ansible.builtin.import_tasks:
+    file: cluster_manager.yml
+  delegate_to: "{{ og_master }}"
+  run_once: true
+  become_user: "{{ og_user }}"

@@ -11,7 +11,27 @@
     - "{{ inventory_dir }}/templates/cluster_config.xml.j2"
     - "cluster_config.xml.j2"
 
-- name: First time deploy
+- name: Cluster expanding
+  ansible.builtin.shell: >-
+    . /home/{{ og_user }}/.bashrc && \
+      {{ og_upload_path }}/script/gs_expansion \
+        -U {{ og_user }} \
+        -G {{ og_group }} \
+        -X {{ og_upload_path }}/cluster_config.xml \
+        -h {{ groups['opengauss_expand'] | join(',') }}
+  become_user: root
+  changed_when: false
+  when: "og_expansion"
+
+- name: Install CM when needed
+  ansible.builtin.import_tasks:
+    file: cluster_manager.yml
+  when:
+    - "groups['opengauss_cm'] is not defined"
+    - "og_cm_enabled"
+  become_user: "{{ og_user }}"
+
+- name: Starting deploy
   when: "not og_expansion"
   block:
     - name: Starting pre install
@@ -32,16 +52,3 @@
       changed_when: false
       become_user: "{{ og_user }}"
       become_flags: "-i"
-
-- name: Starting expand
-  ansible.builtin.shell: |
-    . /home/{{ og_user }}/.bashrc
-
-    {{ og_upload_path }}/script/gs_expansion \
-      -U {{ og_user }} \
-      -G {{ og_group }} \
-      -X {{ og_upload_path }}/cluster_config.xml \
-      -h {{ groups['opengauss_expand'] | join(',') }}
-  become_user: root
-  changed_when: false
-  when: "og_expansion"

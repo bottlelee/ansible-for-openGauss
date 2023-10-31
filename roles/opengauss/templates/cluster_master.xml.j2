@@ -12,7 +12,7 @@
       <PARAM name="dataPortBase" value="{{ og_cluster_config.port_data }}"/>
       <PARAM name="dataNode1" value="{{ og_data_nodes | default(og_all_dn_nodes) }}"/>
       <PARAM name="dataNode1_syncNum" value="{{ og_cluster_config.sync_num }}"/>
-{% if og_cm_enabled %}
+{% if og_cm_enabled and groups['opengauss_cm'] is defined %}
 
       <!-- CLUSTER MANAGER -->
       <PARAM name="cmsNum" value="1"/>

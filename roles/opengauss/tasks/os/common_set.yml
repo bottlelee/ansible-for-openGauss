@@ -18,6 +18,7 @@
     option: RemoveIPC
     value: "no"
     mode: "0644"
+  notify: Restart systemd-logind.service
 
 - name: Config /usr/lib/systemd/system/systemd-logind.service
   ini_file:
@@ -57,6 +58,7 @@
       - bison
       - nano
       - htop
+      - python3-pexpect
     update_cache: true
     use: "{{ custom_pkg_mgr | default(ansible_pkg_mgr) }}"
 
@@ -123,3 +125,13 @@
       ansible.builtin.command:
         swapoff -a
       changed_when: false
+
+- name: Config /etc/sysctl.d/50-opengauss.conf
+  ansible.posix.sysctl:
+    sysctl_file: /etc/sysctl.d/50-opengauss.conf
+    name: "{{ sysctl.key }}"
+    value: "{{ sysctl.value }}"
+  with_dict: "{{ combined_vars.opengauss_sysctl }}"
+  loop_control:
+    label: "{{ sysctl.key }} = {{ sysctl.value }}"
+    loop_var: sysctl

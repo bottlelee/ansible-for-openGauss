@@ -2,15 +2,15 @@
   ansible.builtin.debug:
     msg: "{{ groups['opengauss_expand'] }}"
 
-# - name: Debug
-#   ansible.builtin.debug:
-#     msg: "{{ split_line }}"
-#   loop: "{{ cluster_detail.stdout_lines | sort }}"
-#   loop_control:
-#     loop_var: line
-#   when: "'cmserver' in line"
-#   vars:
-#     split_line: "{{ line | regex_replace(' {1,}', '|') | split('|') }}"
+- name: Debug
+  ansible.builtin.debug:
+    msg: "{{ split_line }}"
+  loop: "{{ cluster_detail.stdout_lines | sort }}"
+  loop_control:
+    loop_var: line
+  when: "'cmserver' in line"
+  vars:
+    split_line: "{{ line | regex_replace(' {1,}', '|') | split('|') }}"
 
 - name: Create current cmserver list
   loop: "{{ cluster_detail.stdout_lines | sort }}"
@@ -34,8 +34,7 @@
   ansible.builtin.set_fact:
     og_expand_cm_ips: >-
       {%- for node in (groups['opengauss_cm'] | sort) -%}
-        {{ hostvars[node]['node_ip'] }}
-        {{ (loop.nextitem is defined) | ternary(',', '') }}
+        {{ hostvars[node]['node_ip'] }}{{ (loop.nextitem is defined) | ternary(',', '') }}
       {%- endfor -%}
       {%- if groups['opengauss_expand'] is defined -%}
         {%- for node in (groups['opengauss_expand'] | sort) -%}
@@ -44,8 +43,7 @@
       {%- endif -%}
     og_cm_names: >-
       {%- for node in (groups['opengauss_cm'] | sort) -%}
-        og{{ hostvars[node]['node_ip'] | ipaddr('int') }}
-        {{ (loop.nextitem is defined) | ternary(',', '') }}
+        og{{ hostvars[node]['node_ip'] | ipaddr('int') }}{{ (loop.nextitem is defined) | ternary(',', '') }}
       {%- endfor -%}
       {%- if groups['opengauss_expand'] is defined -%}
         {%- for node in (groups['opengauss_expand'] | sort) -%}
@@ -54,15 +52,15 @@
       {%- endif -%}
   when: "groups['opengauss_cm'] is defined"
 
-# - name: Debug
-#   ansible.builtin.debug:
-#     msg: "{{ split_line }}"
-#   loop: "{{ cluster_detail.stdout_lines | sort }}"
-#   loop_control:
-#     loop_var: line
-#   when: "(og_data_path + '/dn') in line"
-#   vars:
-#     split_line: "{{ line | regex_replace(' {1,}', '|') | split('|') }}"
+- name: Debug
+  ansible.builtin.debug:
+    msg: "{{ split_line }}"
+  loop: "{{ cluster_detail.stdout_lines | sort }}"
+  loop_control:
+    loop_var: line
+  when: "(og_data_path + '/dn') in line"
+  vars:
+    split_line: "{{ line | regex_replace(' {1,}', '|') | split('|') }}"
 
 - name: Create current data node list
   loop: "{{ cluster_detail.stdout_lines | sort }}"
@@ -70,7 +68,7 @@
     loop_var: line
   when: "(og_data_path + '/dn') in line"
   ansible.builtin.add_host:
-    hostname: "{{ node_info[3] }}_{{ node_info[1] }}"
+    hostname: "{{ node_info[4] }}_{{ node_info[1] }}"
     groups:
       - opengauss_dn
     node_ip: "{{ node_info[2] }}"
@@ -94,10 +92,12 @@
         ,og{{ node | ipaddr('int') }},{{ og_data_path }}/dn
       {%- endfor -%}
     og_expansion: "{{ groups['opengauss_expand'] is defined }}"
-  when: "groups['opengauss_dn'] is defined"
+  when:
+    - "groups['opengauss_dn'] is defined"
 
 - name: Cluster will be expand
-  when: og_expansion
+  when:
+    - "og_expansion"
   block:
     - name: Update /etc/hosts
       ansible.builtin.blockinfile:

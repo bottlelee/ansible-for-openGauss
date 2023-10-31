@@ -21,10 +21,13 @@
         group: "{{ og_group }}"
         recurse: true
 
-    - name: "Create .bashrc under /home/{{ og_user }}"
-      ansible.builtin.file:
+    - name: Config command alias
+      ansible.builtin.lineinfile:
         path: "/home/{{ og_user }}/.bashrc"
-        state: touch
+        create: true
+        line: "{{ item }}"
         owner: "{{ og_user }}"
         group: "{{ og_group }}"
         mode: "0644"
+      with_items:
+        - "alias gs_detail='gs_om -t status --detail'"
