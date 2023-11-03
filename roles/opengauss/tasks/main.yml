@@ -4,48 +4,21 @@
 - name: Tasks always run
   tags: always
   block:
-    - name: Combine vars
+    - name: Import vars combine tasks
       ansible.builtin.import_role:
         name: "pre_tasks"
         tasks_from: "vars_combine.yml"
 
-    - name: Set runtime facts
-      ansible.builtin.import_tasks: runtime_facts.yml
+    - name: Import runtime facts tasks
+      ansible.builtin.import_tasks:
+        file: runtime_facts.yml
 
-    - name: Check cluster status
+    - name: Import cluster check tasks
       ansible.builtin.import_tasks:
         file: deploy/cluster_check.yml
 
-    # - name: Cluster will be expand
-    #   when: og_expansion
-    #   block:
-    #     - name: Start pre tasks
-    #       ansible.builtin.import_tasks:
-    #         file: pre_tasks.yml
-    #       when: "inventory_hostname in groups['opengauss_expand']"
-
-    #     - name: Update /etc/hosts
-    #       ansible.builtin.blockinfile:
-    #         path: /etc/hosts
-    #         marker: "# {mark} OPENGAUSS NODES"
-    #         block: |
-    #           {% for node in og_all_nodes %}
-    #           {{ node }}  og{{ node | ipaddr('int') }} og-{{ node | replace('.', '-') }}
-    #           {% endfor %}
-    #       delegate_to: "{{ node }}"
-    #       loop: "{{ og_all_nodes }}"
-    #       loop_control:
-    #         loop_var: node
-    #       run_once: true
-
-    #     - name: Start deploy
-    #       ansible.builtin.import_tasks:
-    #         file: deploy/main.yml
-    #       delegate_to: "{{ og_master }}"
-    #       run_once: true
-
   always:
-    - name: Run post tasks
+    - name: Import post tasks
       ansible.builtin.import_tasks:
         file: post_tasks.yml
       tags: always

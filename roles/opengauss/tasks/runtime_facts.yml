@@ -13,8 +13,8 @@
     og_cluster_config:
       az_name: "{{ combined_vars.opengauss_env.azName | default('AZ1') }}"
       az_priority: "{{ combined_vars.opengauss_env.azPriority | default('1') }}"
-      port_base: "{{ combined_vars.opengauss_env.cmServerPortBase }}"
-      port_data: "{{ combined_vars.opengauss_env.dataPortBase }}"
+      cm_port: "{{ combined_vars.opengauss_env.cmServerPortBase }}"
+      data_port: "{{ combined_vars.opengauss_env.dataPortBase }}"
       sync_num: "{{ combined_vars.opengauss_env.syncNum }}"
 
 - name: Set runtime facts - 2

@@ -47,7 +47,7 @@ opengauss_env:
   dataPortBase: 15400
   cmServerPortBase: 15300
   azName: AZ1
-  swap_off: true # 关闭 swap
+  swap_off: false # 关闭 swap
   syncNum: 0 # dataNode1_syncNum
   # locale: SQL_ASCII
 

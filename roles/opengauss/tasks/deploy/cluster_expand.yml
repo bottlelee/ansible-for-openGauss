@@ -1,0 +1,25 @@
+- name: Import runtime groups tasks
+  ansible.builtin.import_tasks:
+    file: runtime_groups.yml
+
+- name: Cluster will be expand
+  when:
+    - "og_expansion"
+  block:
+    - name: Update /etc/hosts
+      ansible.builtin.blockinfile:
+        path: /etc/hosts
+        marker: "# {mark} OPENGAUSS NODES"
+        block: |
+          {% for node in og_all_nodes %}
+          {{ node }}  og{{ node | ipaddr('int') }} og-{{ node | replace('.', '-') }}
+          {% endfor %}
+      delegate_to: "{{ node }}"
+      loop: "{{ og_all_nodes }}"
+      loop_control:
+        loop_var: node
+
+    - name: Import deploy tasks
+      ansible.builtin.import_tasks:
+        file: deploy/main.yml
+      delegate_to: "{{ og_master }}"

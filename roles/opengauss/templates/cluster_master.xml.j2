@@ -9,14 +9,22 @@
 
       <!-- Data Node -->
       <PARAM name="dataNum" value="1"/>
-      <PARAM name="dataPortBase" value="{{ og_cluster_config.port_data }}"/>
-      <PARAM name="dataNode1" value="{{ og_data_nodes | default(og_all_dn_nodes) }}"/>
+      <PARAM name="dataPortBase" value="{{ og_cluster_config.data_port }}"/>
+      <PARAM name="dataNode1" value="
+        {%- if temp_data_nodes is defined -%}
+          {{ temp_data_nodes }}
+        {%- elif og_data_nodes is defined -%}
+          {{ og_data_nodes }}
+        {%- else -%}
+          {{ og_all_dn_nodes }}
+        {%- endif -%}
+      "/>
       <PARAM name="dataNode1_syncNum" value="{{ og_cluster_config.sync_num }}"/>
-{% if og_cm_enabled and groups['opengauss_cm'] is defined %}
+{% if og_cm_enabled %}
 
       <!-- CLUSTER MANAGER -->
       <PARAM name="cmsNum" value="1"/>
-      <PARAM name="cmServerPortBase" value="{{ og_cluster_config.port_base }}"/>
+      <PARAM name="cmServerPortBase" value="{{ og_cluster_config.cm_port }}"/>
       <PARAM name="cmServerListenIp1" value="{{ og_expand_cm_ips | default(og_all_ips) }}"/>
       <PARAM name="cmServerHaIp1" value="{{ og_expand_cm_ips | default(og_all_ips) }}"/>
       <PARAM name="cmServerlevel" value="1"/>

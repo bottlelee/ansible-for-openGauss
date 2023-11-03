@@ -5,13 +5,18 @@
         path: "{{ og_upload_path }}"
         state: directory
         mode: "0755"
+        owner: "{{ og_user }}"
+        group: "{{ og_group }}"
 
     - name: "Uploading {{ og_pkg_name }}"
       ansible.builtin.unarchive:
         src: "{{ playbook_dir }}/downloaded_files/{{ og_pkg_name }}"
         dest: "{{ og_upload_path }}/"
         list_files: true
-        creates: "{{ og_upload_path }}/version.cfg"
+        extra_opts:
+          - "--owner={{ og_user }}"
+          - "--group={{ og_group }}"
+        # creates: "{{ og_upload_path }}/version.cfg"
       register: og_upload
 
     - name: "Extracting om tar file"

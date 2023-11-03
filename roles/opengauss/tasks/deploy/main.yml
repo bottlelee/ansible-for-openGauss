@@ -39,11 +39,11 @@
       changed_when: false
 
   rescue:
-    - name: Upload packages
+    - name: Import upload tasks
       ansible.builtin.import_tasks:
         file: deploy/upload.yml
 
   always:
-    - name: In progressing
+    - name: Import installation tasks
       ansible.builtin.import_tasks:
         file: deploy/install.yml

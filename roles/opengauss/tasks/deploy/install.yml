@@ -1,15 +1,25 @@
-- name: "Create cluster_config.xml under {{ og_upload_path }}"
+- name: "Create {{ inventory_dir }}/cluster_config.xml in local"
   ansible.builtin.template:
     src: "{{ item }}"
-    dest: "{{ og_upload_path }}/cluster_config.xml"
+    dest: "{{ inventory_dir }}/cluster_config.xml"
     owner: "{{ og_user }}"
     group: "{{ og_group }}"
     mode: "0644"
-    backup: true
     lstrip_blocks: true
   with_first_found:
     - "{{ inventory_dir }}/templates/cluster_config.xml.j2"
     - "cluster_config.xml.j2"
+  delegate_to: localhost
+  become: false
+
+- name: "Upload cluster_config.xml to {{ og_upload_path }}"
+  ansible.builtin.copy:
+    src: "{{ inventory_dir }}/cluster_config.xml"
+    dest: "{{ og_upload_path }}/"
+    owner: "{{ og_user }}"
+    group: "{{ og_group }}"
+    mode: "0644"
+    backup: true
 
 - name: Cluster expanding
   ansible.builtin.shell: >-
@@ -18,18 +28,11 @@
         -U {{ og_user }} \
         -G {{ og_group }} \
         -X {{ og_upload_path }}/cluster_config.xml \
-        -h {{ groups['opengauss_expand'] | join(',') }}
+        -h {{ groups['opengauss_expand'] | join(',') }} \
+        --time-out {{ (og_all_nodes | count) * 600 }}
   become_user: root
   changed_when: false
   when: "og_expansion"
-
-- name: Install CM when needed
-  ansible.builtin.import_tasks:
-    file: cluster_manager.yml
-  when:
-    - "groups['opengauss_cm'] is not defined"
-    - "og_cm_enabled"
-  become_user: "{{ og_user }}"
 
 - name: Starting deploy
   when: "not og_expansion"
@@ -40,6 +43,7 @@
           -U {{ og_user }} \
           -G {{ og_group }} \
           -X {{ og_upload_path }}/cluster_config.xml \
+          --skip-hostname-set \
           --non-interactive
       changed_when: false
 
@@ -48,7 +52,8 @@
         gs_install \
           -X {{ og_upload_path }}/cluster_config.xml \
           --gsinit-parameter="--pwpasswd={{ og_db_pass }}" \
-          --gsinit-parameter="--locale={{ og_locale }}"
+          --gsinit-parameter="--locale={{ og_locale }}" \
+          --time-out {{ (og_all_nodes | count) * 600 }}
       changed_when: false
       become_user: "{{ og_user }}"
       become_flags: "-i"

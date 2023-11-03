@@ -58,7 +58,7 @@
       - bison
       - nano
       - htop
-      - python3-pexpect
+      - "{{ python_name }}-pexpect"
     update_cache: true
     use: "{{ custom_pkg_mgr | default(ansible_pkg_mgr) }}"
 

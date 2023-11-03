@@ -21,13 +21,6 @@
         global_bond_iface: "{{ iface_name.stdout | trim }}"
         global_bond_ip: "{{ ansible_host | default(inventory_hostname) }}"
 
-# - name: "Set `inventory_dir` equal to `playbook_dir`"
-#   ansible.builtin.set_fact:
-#     inventory_dir: "{{ playbook_dir }}"
-#   when:
-#     - inventory_dir is not defined
-#     - playbook_dir is defined
-
 - name: Set python vars
   ansible.builtin.set_fact:
     python_name: "{{ (ansible_python_interpreter | default(discovered_interpreter_python)) | basename }}"
