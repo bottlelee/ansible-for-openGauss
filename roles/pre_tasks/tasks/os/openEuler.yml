@@ -1,6 +1,6 @@
 - name: "Replace sources mirror with {{ global_pkg_mirror }}"
   ansible.builtin.replace:
     path: "/etc/yum.repos.d/openEuler.repo"
-    regexp: "http(s)://repo.openeuler.org"
+    regexp: "http(s|)://repo.openeuler.org"
     replace: "{{ global_pkg_mirror }}/openeuler"
   when: "global_pkg_mirror is defined"

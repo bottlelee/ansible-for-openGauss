@@ -14,9 +14,9 @@
       ansible.builtin.add_host:
         hostname: >-
           {%- if og_cluster_config.data_port in line -%}
-            {{ node_info[4] }}_{{ node_info[1] }}
+            {{ node_info[4] }}_{{ node_info[1] }}_{{ node_info[7] }}
           {%- else -%}
-            {{ node_info[3] }}_{{ node_info[1] }}
+            {{ node_info[3] }}_{{ node_info[1] }}_{{ node_info[6] }}
           {%- endif -%}
         groups:
           - opengauss_cm
@@ -28,16 +28,6 @@
       when: "(og_data_path + '/dn') in line"
       vars:
         node_info: "{{ line | regex_replace(' {1,}', '|') | split('|') }}"
-
-    # - name: Create initial cmserver list
-    #   ansible.builtin.add_host:
-    #     hostname: "{{ hostvars[node]['node_ip'] }}"
-    #     groups:
-    #       - opengauss_cm
-    #   loop: "{{ groups['opengauss_dn'] }}"
-    #   loop_control:
-    #     loop_var: node
-    #     label: "{{ hostvars[node]['node_ip'] }}"
 
     - name: "Import packages upload tasks"
       ansible.builtin.import_tasks:
@@ -85,7 +75,7 @@
       delegate_to: "{{ item }}"
 
     # 这里创建一个临时的用于安装 CM 的 cluster_config.xml
-    - name: "Create cluster_config.xml under {{ og_upload_path }}"
+    - name: "Create /tmp/cluster_config.xml"
       ansible.builtin.template:
         src: "{{ item }}"
         dest: "/tmp/cluster_config.xml"
@@ -156,14 +146,44 @@
         file: cluster_manager.yml
 
   always:
-    - name: Debug
-      ansible.builtin.debug:
-        var: cm_install
+    # - name: Debug
+    #   ansible.builtin.debug:
+    #     var: cm_install
 
-    - name: Start cluster
+    - name: Start the primary data node
       ansible.builtin.command:
-        gs_om -t restart
-      with_items:
-        - "cm_ctl start"
-        - "gs_om -t start"
+        "gs_om -t start -h {{ hostvars[node]['node_name'] }}"
+      loop: "{{ groups['opengauss_dn'] }}"
+      loop_control:
+        loop_var: node
+      when: "'Primary' in node"
+      changed_when: false
+
+    - name: Wait for primary node started
+      ansible.builtin.wait_for:
+        host: "{{ hostvars[node]['node_ip'] }}"
+        port: "{{ og_cluster_config.cm_port }}"
+        timeout: "600"
+      loop: "{{ groups['opengauss_dn'] }}"
+      loop_control:
+        loop_var: node
+      when: "'Primary' in node"
+      changed_when: false
+
+    - name: Start the rest of data nodes
+      ansible.builtin.command:
+        "gs_om -t start -h {{ hostvars[node]['node_name'] }}"
+      loop: "{{ groups['opengauss_dn'] }}"
+      loop_control:
+        loop_var: node
+      when: "'Primary' not in node"
+      changed_when: false
+
+    - name: Wait for the cluster started
+      ansible.builtin.command:
+        "gs_om -t status"
+      register: gs_status
+      until: "'Normal' in gs_status.stdout"
+      retries: 30
+      delay: 10
       changed_when: false

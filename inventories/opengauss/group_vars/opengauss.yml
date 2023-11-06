@@ -2,4 +2,4 @@
 
 opengauss_version: 5.0.0
 
-global_pkg_mirror: https://mirrors.aliyun.com
+# global_pkg_mirror: https://mirrors.aliyun.com

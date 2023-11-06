@@ -21,18 +21,29 @@
     mode: "0644"
     backup: true
 
-- name: Cluster expanding
-  ansible.builtin.shell: >-
-    . /home/{{ og_user }}/.bashrc && \
-      {{ og_upload_path }}/script/gs_expansion \
-        -U {{ og_user }} \
-        -G {{ og_group }} \
-        -X {{ og_upload_path }}/cluster_config.xml \
-        -h {{ groups['opengauss_expand'] | join(',') }} \
-        --time-out {{ (og_all_nodes | count) * 600 }}
+- name: Start expansion
   become_user: root
-  changed_when: false
   when: "og_expansion"
+  block:
+    - name: Starting pre install
+      ansible.builtin.command: >-
+        {{ og_upload_path }}/script/gs_preinstall \
+          -U {{ og_user }} \
+          -G {{ og_group }} \
+          -X {{ og_upload_path }}/cluster_config.xml \
+          --non-interactive
+      changed_when: false
+
+    - name: Cluster expanding
+      ansible.builtin.shell: >-
+        . /home/{{ og_user }}/.bashrc && \
+          {{ og_upload_path }}/script/gs_expansion \
+            -U {{ og_user }} \
+            -G {{ og_group }} \
+            -X {{ og_upload_path }}/cluster_config.xml \
+            -h {{ groups['opengauss_expand'] | join(',') }} \
+            --time-out {{ (og_all_nodes | count) * 600 }}
+      changed_when: false
 
 - name: Starting deploy
   when: "not og_expansion"
@@ -43,7 +54,6 @@
           -U {{ og_user }} \
           -G {{ og_group }} \
           -X {{ og_upload_path }}/cluster_config.xml \
-          --skip-hostname-set \
           --non-interactive
       changed_when: false
 

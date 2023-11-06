@@ -2,18 +2,18 @@
 #   ansible.builtin.debug:
 #     msg: "{{ groups['opengauss_expand'] }}"
 
-- ansible.builtin.debug:
-    var: cluster_detail.stdout_lines
+# - ansible.builtin.debug:
+#     var: cluster_detail.stdout_lines
 
-- name: Debug
-  ansible.builtin.debug:
-    msg: "{{ split_line }}"
-  loop: "{{ cluster_detail.stdout_lines | sort }}"
-  loop_control:
-    loop_var: line
-  when: "'cmserver' in line"
-  vars:
-    split_line: "{{ line | regex_replace(' {1,}', '|') | split('|') }}"
+# - name: Debug
+#   ansible.builtin.debug:
+#     msg: "{{ split_line }}"
+#   loop: "{{ cluster_detail.stdout_lines | sort }}"
+#   loop_control:
+#     loop_var: line
+#   when: "'cmserver' in line"
+#   vars:
+#     split_line: "{{ line | regex_replace(' {1,}', '|') | split('|') }}"
 
 - name: Create current cmserver list
   ansible.builtin.add_host:
@@ -55,15 +55,15 @@
       {%- endif -%}
   when: "groups['opengauss_cm'] is defined"
 
-- name: Debug
-  ansible.builtin.debug:
-    msg: "{{ split_line }}"
-  loop: "{{ cluster_detail.stdout_lines | sort }}"
-  loop_control:
-    loop_var: line
-  when: "(og_data_path + '/dn') in line"
-  vars:
-    split_line: "{{ line | regex_replace(' {1,}', '|') | split('|') }}"
+# - name: Debug
+#   ansible.builtin.debug:
+#     msg: "{{ split_line }}"
+#   loop: "{{ cluster_detail.stdout_lines | sort }}"
+#   loop_control:
+#     loop_var: line
+#   when: "(og_data_path + '/dn') in line"
+#   vars:
+#     split_line: "{{ line | regex_replace(' {1,}', '|') | split('|') }}"
 
 # 这里需要判断输出了多少列，因为有 CM 的集群里，不输出数据库端口的那一列。
 - name: Create current data node list

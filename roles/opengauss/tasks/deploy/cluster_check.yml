@@ -20,6 +20,29 @@
       delegate_to: "{{ og_master }}"
       run_once: true
 
+    - name: Repeat tasks
+      ansible.builtin.include_tasks:
+        file: cluster_check.yml
+
+- name: Mission aborted
+  run_once: true
+  when: "cluster_detail.stdout | regex_search(keywords, multiline=True, ignorecase=True)"
+  vars:
+    keywords: >-
+      "(repair|down)"
+  block:
+    - name: Print cluster status
+      ansible.builtin.debug:
+        msg: |
+          {{ cluster_detail.stdout_lines }}
+
+    - name: Abort tasks when conditions matched
+      ansible.builtin.fail:
+        msg: |
+          集群状态有异常，请检查并手动修复后，再运行 playbook。
+          Cluster status is not NORMAL, pls fix them
+          and run the playbook again.
+
 - name: Tasks for expansion
   when: "cluster_detail is succeeded"
   block:
