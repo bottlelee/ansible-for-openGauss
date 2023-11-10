@@ -1,0 +1,38 @@
+- name: "Import custom tasks for {{ ansible_distribution }}"
+  ansible.builtin.include_tasks:
+    file: "{{ item }}"
+  with_first_found:
+    - "os/{{ ansible_distribution | replace(' ', '_') }}.yml"
+    - "os/not_supported.yml"
+
+- name: Import Common tasks for all distribution
+  ansible.builtin.import_tasks:
+    file: os/common_set.yml
+
+- name: "Import custom tasks for {{ ansible_os_family }}"
+  ansible.builtin.include_tasks:
+    file: "{{ item }}"
+  with_first_found:
+    - "os/{{ ansible_os_family }}.yml"
+    - "os/not_supported.yml"
+
+- name: Import user config tasks
+  ansible.builtin.include_tasks:
+    file: os/user.yml
+  with_items: "{{ groups['opengauss_ep'] | default(og_all_nodes) }}"
+  loop_control:
+    loop_var: node
+  run_once: true
+
+- name: Import ssh config tasks
+  ansible.builtin.include_tasks:
+    file: os/ssh.yml
+  with_items:
+    - user: root
+      group: root
+      home: /root
+    - user: "{{ og_user }}"
+      group: "{{ og_group }}"
+      home: "/home/{{ og_user }}"
+  loop_control:
+    loop_var: og_ssh

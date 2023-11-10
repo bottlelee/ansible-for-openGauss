@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ROOT>
+  <CLUSTER>
+    <PARAM name="clusterName" value="{{ combined_vars.opengauss_env.clusterName }}" />
+    <PARAM name="gaussdbAppPath" value="{{ combined_vars.opengauss_paths.gaussdbAppPath }}" />
+    <PARAM name="gaussdbLogPath" value="{{ combined_vars.opengauss_paths.gaussdbLogPath }}" />
+    <PARAM name="tmpMppdbPath" value="{{ combined_vars.opengauss_paths.tmpMppdbPath }}"/>
+    <PARAM name="gaussdbToolPath" value="{{ combined_vars.opengauss_paths.gaussdbToolPath }}" />
+    <PARAM name="corePath" value="{{ combined_vars.opengauss_paths.corePath }}"/>
+    <PARAM name="nodeNames" value="og{{ og_master | ipaddr('int') }}
+{% for node in dn_nodes if (hostvars[node]['node_ip'] != og_master) %}
+      ,{{ hostvars[node]['node_name'] }}
+{% endfor %}
+{% for node in ep_nodes %}
+      ,og{{ node | ipaddr('int') }}
+{% endfor %}
+    "/>
+    <PARAM name="backIp1s" value="{{ og_master }}
+{% for node in dn_nodes if (hostvars[node]['node_ip'] != og_master) %}
+      ,{{ hostvars[node]['node_ip'] }}
+{% endfor %}
+{% for node in ep_nodes %}
+      ,{{ node }}
+{% endfor %}
+    "/>
+  </CLUSTER>
+
+  <DEVICELIST>
+
+{{ lookup('ansible.builtin.template', 'cluster_master.xml.j2') }}
+
+{{ lookup('ansible.builtin.template', 'cluster_replicas.xml.j2') }}
+
+  </DEVICELIST>
+</ROOT>

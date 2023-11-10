@@ -1,0 +1,23 @@
+- name: Add authorized key for root
+  ansible.posix.authorized_key:
+    user: "root"
+    state: present
+    key: "{{ lookup('file', pub_key) }}"
+  with_fileglob:
+    - "{{ inventory_dir }}/credentials/opengauss_id*.pub"
+  loop_control:
+    loop_var: pub_key
+    label: "/root/.ssh/{{ pub_key | basename | replace('opengauss_', '') }}"
+  delegate_to: "{{ node }}"
+
+- name: "Add authorized key for {{ og_user }}"
+  ansible.posix.authorized_key:
+    user: "{{ og_user }}"
+    state: present
+    key: "{{ lookup('file', pub_key) }}"
+  with_fileglob:
+    - "{{ inventory_dir }}/credentials/opengauss_id*.pub"
+  loop_control:
+    loop_var: pub_key
+    label: "/home/{{ og_user }}/.ssh/{{ pub_key | basename | replace('opengauss_', '') }}"
+  delegate_to: "{{ node }}"

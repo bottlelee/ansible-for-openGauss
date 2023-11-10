@@ -1,3 +1,11 @@
 downloaded_files
-ansible-docker/inventories/opengauss/credentials
-ansible-docker/inventories/opengauss/assembled_vars
+inventories/opengauss/credentials
+inventories/opengauss/assembled_vars
+inventories/opengauss/report*
+inventories/opengauss/hostvars
+vagrant/.vagrant
+vagrant/packer_cache
+vagrant/output*
+log
+test.yml
+inventories/opengauss/cluster_config.xml

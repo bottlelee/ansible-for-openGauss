@@ -1,0 +1,56 @@
+    <!-- CLUSTER PRIMARY -->
+    <DEVICE sn="og{{ og_master | ipaddr('int') }}">
+      <PARAM name="name" value="og{{ og_master | ipaddr('int') }}"/>
+      <PARAM name="instanceId" value="{{ og_master | ipaddr('int') }}"/>
+      <PARAM name="azName" value="{{ og_cluster_config.az_name }}"/>
+      <PARAM name="azPriority" value="{{ og_cluster_config.az_priority }}"/>
+      <PARAM name="backIp1" value="{{ og_master }}"/>
+      <PARAM name="sshIp1" value="{{ og_master }}"/>
+
+      <!-- Data Node -->
+      <PARAM name="dataNum" value="1"/>
+      <PARAM name="dataPortBase" value="{{ og_cluster_config.db_port }}"/>
+      <PARAM name="dataNode1" value="{{ og_data_path }}/dn
+{% for node in dn_nodes
+  if hostvars[node]['node_ip'] != og_master
+%}
+        ,{{ hostvars[node]['node_name'] }},{{ og_data_path }}/dn
+{% endfor %}
+{% for node in ep_nodes %}
+        ,og{{ node | ipaddr('int') }},{{ og_data_path }}/dn
+{% endfor %}
+      "/>
+      <PARAM name="dataNode1_syncNum" value="{{ og_cluster_config.sync_num }}"/>
+
+    {%- if og_cm_enabled -%}
+      <!-- CLUSTER MANAGER -->
+      <PARAM name="cmsNum" value="1"/>
+      <PARAM name="cmServerPortBase" value="{{ og_cluster_config.cm_port }}"/>
+      <PARAM name="cmServerlevel" value="1"/>
+      <PARAM name="cmDir" value="{{ og_data_path }}/cmserver"/>
+      <PARAM name="cmServerRelation" value="og{{ og_master | ipaddr('int') }}
+{% for node in cm_nodes if hostvars[node]['node_ip'] != og_master %}
+        ,og{{ hostvars[node]['node_ip'] | default(node) | ipaddr('int') }}
+{% endfor %}
+{% for node in ep_nodes %}
+        ,og{{ node | ipaddr('int') }}
+{% endfor %}
+      "/>
+      <PARAM name="cmServerListenIp1" value="{{ og_master }}
+{% for node in cm_nodes if hostvars[node]['node_ip'] != og_master %}
+        ,{{ hostvars[node]['node_ip'] | default(node) }}
+{% endfor %}
+{% for node in ep_nodes %}
+        ,{{ node }}
+{% endfor %}
+      "/>
+      <PARAM name="cmServerHaIp1" value="{{ og_master }}
+{% for node in cm_nodes if hostvars[node]['node_ip'] != og_master %}
+        ,{{ hostvars[node]['node_ip'] | default(node) }}
+{% endfor %}
+{% for node in ep_nodes %}
+        ,{{ node }}
+{% endfor %}
+      "/>
+    {%- endif -%}
+    </DEVICE>

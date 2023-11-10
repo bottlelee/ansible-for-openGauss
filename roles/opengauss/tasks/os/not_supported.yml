@@ -1,0 +1,6 @@
+- name: Unsupported distribution
+  ansible.builtin.debug:
+    msg: "'{{ ansible_distribution }}' is not supported"
+
+- name: End the play
+  ansible.builtin.meta: end_play

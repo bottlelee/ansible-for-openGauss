@@ -1,0 +1,35 @@
+- name: Import pre tasks
+  ansible.builtin.include_tasks:
+    file: pre_tasks.yml
+  when: "inventory_hostname in ep_nodes"
+
+- name: Import deploy tasks
+  ansible.builtin.import_tasks:
+    file: deploy/main.yml
+  delegate_to: "{{ og_master }}"
+  run_once: true
+
+# # 3 节点或以上，且未部署 CM 的情况。
+# - name: Tasks for CM cluster
+#   when:
+#     - "(cm_nodes | count) < 2"
+#     - "og_cm_enabled"
+#   run_once: true
+#   block:
+#     - name: Import cluster manager tasks
+#       ansible.builtin.import_tasks:
+#         file: cluster_manager.yml
+#       delegate_to: "{{ og_master }}"
+#       become_user: "{{ og_user }}"
+
+#     - name: Refresh cluster status
+#       ansible.builtin.command:
+#         gs_om -t status --detail
+#       changed_when: false
+#       register: gs_detail1
+#       become_user: "{{ og_user }}"
+#       delegate_to: "{{ og_master }}"
+
+#     - name: Import runtime groups tasks
+#       ansible.builtin.import_tasks:
+#         file: deploy/runtime_groups.yml

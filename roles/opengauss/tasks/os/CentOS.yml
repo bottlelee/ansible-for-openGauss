@@ -1,0 +1,17 @@
+- name: Install epel-release
+  ansible.builtin.package:
+    name: epel-release
+    use: "{{ custom_pkg_mgr | default(ansible_pkg_mgr) }}"
+  register: pkg_inst
+  until: pkg_inst is succeeded
+  retries: 3
+
+- name: Install dependencies
+  ansible.builtin.package:
+    name:
+      - python36
+      - redhat-lsb-core
+    use: "{{ custom_pkg_mgr | default(ansible_pkg_mgr) }}"
+  register: pkg_inst
+  until: pkg_inst is succeeded
+  retries: 3

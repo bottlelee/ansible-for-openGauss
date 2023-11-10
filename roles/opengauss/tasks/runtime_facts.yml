@@ -1,0 +1,33 @@
+- name: Set runtime facts - 1
+  ansible.builtin.set_fact:
+    og_user: "{{ combined_vars.opengauss_env.user_name }}"
+    og_group: "{{ combined_vars.opengauss_env.user_group }}"
+    og_user_pass: "{{ combined_vars.opengauss_env.user_pass }}"
+    og_ca_pass: "{{ combined_vars.opengauss_env.ca_file_pass }}"
+    og_home: "{{ combined_vars.opengauss_home }}"
+    og_paths: "{{ combined_vars.opengauss_paths }}"
+    og_ver: "{{ combined_vars.opengauss_version }}"
+    og_data_path: "{{ combined_vars.opengauss_paths.dataPath }}"
+    og_db_pass: "{{ combined_vars.opengauss_db_set.root_pass }}"
+    og_locale: "{{ combined_vars.opengauss_env.locale | default(ansible_env.LANG) }}"
+    og_cluster_config:
+      az_name: "{{ combined_vars.opengauss_env.azName | default('AZ1') }}"
+      az_priority: "{{ combined_vars.opengauss_env.azPriority | default('1') }}"
+      cm_port: "{{ combined_vars.opengauss_env.cmServerPortBase }}"
+      db_port: "{{ combined_vars.opengauss_env.dataPortBase }}"
+      sync_num: "{{ combined_vars.opengauss_env.syncNum }}"
+
+- name: Set runtime facts - 2
+  ansible.builtin.set_fact:
+    og_pkg_url: >-
+      {{ combined_vars.opengauss_download
+        [
+          ansible_architecture
+        ]
+        [
+          (
+            ansible_distribution | replace(' ', '_') | lower
+          ) + '_' + ansible_distribution_major_version
+        ] | replace(opengauss_version, og_ver)
+      }}
+    og_pkg_name: "openGauss_{{ og_ver }}_{{ ansible_distribution }}_{{ ansible_distribution_version }}_{{ ansible_architecture }}.tar.gz"

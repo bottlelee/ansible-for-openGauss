@@ -1,5 +1,8 @@
+# code: language=ansible
+
 - name: Deploy openGauss
-  hosts: openGauss
+  hosts: opengauss
   become: true
+  become_flags: "-i"
   roles:
-    - openGauss
+    - opengauss

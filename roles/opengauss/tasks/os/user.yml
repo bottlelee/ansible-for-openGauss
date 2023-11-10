@@ -1,0 +1,33 @@
+- name: Create user on each node
+  delegate_to: "{{ node }}"
+  block:
+    - name: "Create group '{{ og_group }}'"
+      ansible.builtin.group:
+        name: "{{ og_group }}"
+
+    - name: "Create user '{{ og_user }}'"
+      ansible.builtin.user:
+        name: "{{ og_user }}"
+        group: "{{ og_group }}"
+        shell: "/bin/bash"
+        password: "{{ og_user_pass }}"
+        update_password: on_create
+
+    - name: "Fix home permission in some cases"
+      ansible.builtin.file:
+        path: "/home/{{ og_user }}"
+        state: directory
+        owner: "{{ og_user }}"
+        group: "{{ og_group }}"
+        recurse: true
+
+    - name: "Config command alias for user '{{ og_user }}'"
+      ansible.builtin.lineinfile:
+        path: "/home/{{ og_user }}/.bashrc"
+        create: true
+        line: "{{ item }}"
+        owner: "{{ og_user }}"
+        group: "{{ og_group }}"
+        mode: "0644"
+      with_items:
+        - "alias gs_detail='gs_om -t status --detail'"

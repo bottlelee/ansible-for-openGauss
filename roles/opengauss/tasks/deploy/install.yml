@@ -1,0 +1,69 @@
+- name: "Create cluster_config.xml in local path '{{ inventory_dir }}'"
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: "{{ inventory_dir }}/cluster_config.xml"
+    owner: "{{ og_user }}"
+    group: "{{ og_group }}"
+    mode: "0644"
+    lstrip_blocks: true
+  with_first_found:
+    - "{{ inventory_dir }}/templates/cluster_config.xml.j2"
+    - "cluster_config.xml.j2"
+  delegate_to: localhost
+  become: false
+
+- name: "Upload cluster_config.xml to {{ og_upload_path }}"
+  ansible.builtin.copy:
+    src: "{{ inventory_dir }}/cluster_config.xml"
+    dest: "{{ og_upload_path }}/"
+    owner: "{{ og_user }}"
+    group: "{{ og_group }}"
+    mode: "0644"
+    backup: true
+
+- name: Start expansion
+  become_user: root
+  when: "og_expansion"
+  block:
+    - name: Starting pre install
+      ansible.builtin.command: >-
+        {{ og_upload_path }}/script/gs_preinstall \
+          -U {{ og_user }} \
+          -G {{ og_group }} \
+          -X {{ og_upload_path }}/cluster_config.xml \
+          --non-interactive
+      changed_when: false
+
+    - name: Cluster expanding
+      ansible.builtin.shell: >-
+        . /home/{{ og_user }}/.bashrc && \
+          {{ og_upload_path }}/script/gs_expansion \
+            -U {{ og_user }} \
+            -G {{ og_group }} \
+            -X {{ og_upload_path }}/cluster_config.xml \
+            -h {{ groups['opengauss_ep'] | join(',') }} \
+            --time-out {{ (og_all_nodes | count) * 600 }}
+      changed_when: false
+
+- name: Starting deploy
+  when: "not og_expansion"
+  block:
+    - name: Starting pre install
+      ansible.builtin.command: >-
+        {{ og_upload_path }}/script/gs_preinstall \
+          -U {{ og_user }} \
+          -G {{ og_group }} \
+          -X {{ og_upload_path }}/cluster_config.xml \
+          --non-interactive
+      changed_when: false
+
+    - name: Deploy openGauss
+      ansible.builtin.command: >-
+        gs_install \
+          -X {{ og_upload_path }}/cluster_config.xml \
+          --gsinit-parameter="--pwpasswd={{ og_db_pass }}" \
+          --gsinit-parameter="--locale={{ og_locale }}" \
+          --time-out {{ (og_all_nodes | count) * 600 }}
+      changed_when: false
+      become_user: "{{ og_user }}"
+      become_flags: "-i"
