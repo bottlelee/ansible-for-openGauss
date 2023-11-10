@@ -18,8 +18,10 @@
     F2：新建虚拟终端窗口
     F3：向左切换窗口
     F4：向右切换窗口
-    F6：将 byobu 置于后台。后续可以再次执行 `docker exec -it ansible-for-opengauss byobu` 进入。
+    F6：将 byobu 置于后台。这也是你退出 Ansible 容器的方法，无需关闭已开启的终端。
     ```
+ 
+   后续可以再次执行 `docker exec -it ansible-for-opengauss byobu` 进入。
 
 1. 执行部署
 
