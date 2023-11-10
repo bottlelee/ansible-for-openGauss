@@ -17,6 +17,7 @@
 
 # 如果已部署集群
 - name: If deployed
+  when: "gs_detail is succeeded"
   block:
     # 不在集群里的 IP 加入到扩展节点分组。
     - name: Create group 'opengauss_ep'
@@ -70,24 +71,24 @@
       vars:
         node_info: "{{ line | regex_replace(' {1,}', '|') | split('|') }}"
 
-# # 如果未部署集群
-# - name: Create init data nodes list
-#   ansible.builtin.add_host:
-#     hostname: "{{ node }}"
-#     groups:
-#       - opengauss_dn
-#     node_ip: "{{ node }}"
-#     node_name: "og{{ node | ipaddr('int') }}"
-#   loop: "{{ groups['opengauss'] }}"
-#   loop_control:
-#     loop_var: node
-#     extended: true
-#   when: "gs_detail.stdout_lines is falsy"
+# 如果未部署集群
+- name: Create init data nodes list
+  ansible.builtin.add_host:
+    hostname: "{{ node }}"
+    groups:
+      - opengauss_dn
+    node_ip: "{{ node }}"
+    node_name: "og{{ node | ipaddr('int') }}"
+  loop: "{{ groups['opengauss'] }}"
+  loop_control:
+    loop_var: node
+    extended: true
+  when: "gs_detail is failed"
 
-# - name: Current data nodes
-#   ansible.builtin.debug:
-#     msg: "{{ groups['opengauss_dn'] }}"
-#   when: "groups['opengauss_dn'] is defined"
+- name: Current data nodes
+  ansible.builtin.debug:
+    msg: "{{ groups['opengauss_dn'] }}"
+  when: "groups['opengauss_dn'] is defined"
 
 # # 如果未部署 CM 且为单节点
 # - name: Create groups for CM deploy | Single node mode
