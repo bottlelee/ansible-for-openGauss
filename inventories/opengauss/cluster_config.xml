@@ -2,13 +2,19 @@
 <ROOT>
   <CLUSTER>
     <PARAM name="clusterName" value="openGauss" />
-    <PARAM name="nodeNames" value="og3232249874,og3232249875,og3232249871,og3232249872,og3232249873"/>
     <PARAM name="gaussdbAppPath" value="/opt/openGauss/install/app" />
     <PARAM name="gaussdbLogPath" value="/var/log/" />
     <PARAM name="tmpMppdbPath" value="/opt/openGauss/tmp"/>
     <PARAM name="gaussdbToolPath" value="/opt/openGauss/install/om" />
     <PARAM name="corePath" value="/opt/openGauss/corefile"/>
-    <PARAM name="backIp1s" value="192.168.56.18,192.168.56.19,192.168.56.15,192.168.56.16,192.168.56.17"/>
+    <PARAM name="nodeNames" value="og3232249874
+      ,og3232249871
+      ,og3232249875
+    "/>
+    <PARAM name="backIp1s" value="192.168.56.18
+      ,192.168.56.15
+      ,192.168.56.19
+    "/>
   </CLUSTER>
 
   <DEVICELIST>
@@ -25,20 +31,29 @@
       <!-- Data Node -->
       <PARAM name="dataNum" value="1"/>
       <PARAM name="dataPortBase" value="15400"/>
-      <PARAM name="dataNode1" value="/opt/openGauss/data/dn,og3232249875,/opt/openGauss/data/dn,og3232249871,/opt/openGauss/data/dn,og3232249872,/opt/openGauss/data/dn,og3232249873,/opt/openGauss/data/dn"/>
-      <PARAM name="dataNode1_syncNum" value="0"/>
-
-      <!-- CLUSTER MANAGER -->
+      <PARAM name="dataNode1" value="/opt/openGauss/data/dn
+        ,og3232249871,/opt/openGauss/data/dn
+        ,og3232249875,/opt/openGauss/data/dn
+      "/>
+      <PARAM name="dataNode1_syncNum" value="0"/><!-- CLUSTER MANAGER -->
       <PARAM name="cmsNum" value="1"/>
       <PARAM name="cmServerPortBase" value="15300"/>
-      <PARAM name="cmServerListenIp1" value="192.168.56.18,192.168.56.19,192.168.56.15,192.168.56.16,192.168.56.17"/>
-      <PARAM name="cmServerHaIp1" value="192.168.56.18,192.168.56.19,192.168.56.15,192.168.56.16,192.168.56.17"/>
       <PARAM name="cmServerlevel" value="1"/>
-      <PARAM name="cmServerRelation" value="og3232249874,og3232249875,og3232249871,og3232249872,og3232249873"/>
       <PARAM name="cmDir" value="/opt/openGauss/data/cmserver"/>
-    </DEVICE>
+      <PARAM name="cmServerRelation" value="og3232249874
+        ,og3232249871
+        ,og3232249875
+      "/>
+      <PARAM name="cmServerListenIp1" value="192.168.56.18
+        ,192.168.56.15
+        ,192.168.56.19
+      "/>
+      <PARAM name="cmServerHaIp1" value="192.168.56.18
+        ,192.168.56.15
+        ,192.168.56.19
+      "/></DEVICE>
 
-    <!-- CLUSTER REPLICA -->
+
     <DEVICE sn="og3232249871">
       <PARAM name="name" value="og3232249871"/>
       <PARAM name="azName" value="AZ1"/>
@@ -49,36 +64,7 @@
       <!-- CLUSTER MANAGER -->
       <PARAM name="cmServerPortStandby" value="15800"/>
       <PARAM name="cmDir" value="/opt/openGauss/data/cmserver"/>
-    </DEVICE>
 
-    <DEVICE sn="og3232249872">
-      <PARAM name="name" value="og3232249872"/>
-      <PARAM name="azName" value="AZ1"/>
-      <PARAM name="azPriority" value="1"/>
-      <PARAM name="backIp1" value="192.168.56.16"/>
-      <PARAM name="sshIp1" value="192.168.56.16"/>
-
-      <!-- CLUSTER MANAGER -->
-      <PARAM name="cmServerPortStandby" value="15800"/>
-      <PARAM name="cmDir" value="/opt/openGauss/data/cmserver"/>
-
-      <!-- CASCADE ROLE -->
-      <PARAM name="cascadeRole" value="on"/>
-    </DEVICE>
-
-    <DEVICE sn="og3232249873">
-      <PARAM name="name" value="og3232249873"/>
-      <PARAM name="azName" value="AZ1"/>
-      <PARAM name="azPriority" value="1"/>
-      <PARAM name="backIp1" value="192.168.56.17"/>
-      <PARAM name="sshIp1" value="192.168.56.17"/>
-
-      <!-- CLUSTER MANAGER -->
-      <PARAM name="cmServerPortStandby" value="15800"/>
-      <PARAM name="cmDir" value="/opt/openGauss/data/cmserver"/>
-
-      <!-- CASCADE ROLE -->
-      <PARAM name="cascadeRole" value="on"/>
     </DEVICE>
 
     <DEVICE sn="og3232249875">
@@ -91,7 +77,9 @@
       <!-- CLUSTER MANAGER -->
       <PARAM name="cmServerPortStandby" value="15800"/>
       <PARAM name="cmDir" value="/opt/openGauss/data/cmserver"/>
+
     </DEVICE>
+
 
 
   </DEVICELIST>

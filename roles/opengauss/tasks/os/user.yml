@@ -21,7 +21,7 @@
         group: "{{ og_group }}"
         recurse: true
 
-    - name: Config command alias
+    - name: "Config command alias for user '{{ og_user }}'"
       ansible.builtin.lineinfile:
         path: "/home/{{ og_user }}/.bashrc"
         create: true

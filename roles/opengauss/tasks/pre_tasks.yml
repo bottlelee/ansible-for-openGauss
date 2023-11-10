@@ -19,7 +19,7 @@
 - name: Import user config tasks
   ansible.builtin.include_tasks:
     file: os/user.yml
-  with_items: "{{ groups['opengauss_expand'] | default(og_all_nodes) }}"
+  with_items: "{{ groups['opengauss_ep'] | default(og_all_nodes) }}"
   loop_control:
     loop_var: node
   run_once: true

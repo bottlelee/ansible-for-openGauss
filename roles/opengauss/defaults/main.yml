@@ -95,7 +95,7 @@ opengauss_download:
 og_hostname: "og{{ inventory_hostname | ipaddr('int') }}"
 og_all_nodes: "{{ groups['opengauss'] | sort }}"
 og_master: "{{ groups['opengauss_master'] | first }}"
-og_replicas: "{{ groups['opengauss_replica_nodes'] | sort }}"
+og_replicas: "{{ groups['opengauss_replicas'] | sort }}"
 og_upload_path: "/opt/software/openGauss"
 og_cm_enabled: "{{ (groups['opengauss'] | count) > 2 }}"
 og_expansion: false

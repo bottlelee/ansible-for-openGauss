@@ -1,16 +1,30 @@
-- name: "Update .ssh/known_hosts"
+- name: "Update /root/.ssh/known_hosts"
   ansible.builtin.blockinfile:
-    path: "{{ og_ssh.home }}/.ssh/known_hosts"
-    owner: "{{ og_ssh.user }}"
-    group: "{{ og_ssh.group }}"
+    path: "/root/.ssh/known_hosts"
+    owner: "root"
+    group: "root"
     create: true
     mode: "0644"
     block: |
       {% for key in (host_keys | sort) %}
       {{ key }}
       {% endfor %}
-  vars:
-    host_keys: "{{ known_host_keys.results | map(attribute='stdout_lines') | flatten }}"
+  loop: "{{ og_all_nodes }}"
+  loop_control:
+    loop_var: node
+  delegate_to: "{{ node }}"
+
+- name: "Update ~/.ssh/known_hosts for user '{{ og_user }}'"
+  ansible.builtin.blockinfile:
+    path: "/home/{{ og_user }}/.ssh/known_hosts"
+    owner: "{{ og_user }}"
+    group: "{{ og_group }}"
+    create: true
+    mode: "0644"
+    block: |
+      {% for key in (host_keys | sort) %}
+      {{ key }}
+      {% endfor %}
   loop: "{{ og_all_nodes }}"
   loop_control:
     loop_var: node

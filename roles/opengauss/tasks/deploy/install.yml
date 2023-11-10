@@ -1,4 +1,4 @@
-- name: "Create {{ inventory_dir }}/cluster_config.xml in local"
+- name: "Create cluster_config.xml in local path '{{ inventory_dir }}'"
   ansible.builtin.template:
     src: "{{ item }}"
     dest: "{{ inventory_dir }}/cluster_config.xml"
@@ -41,7 +41,7 @@
             -U {{ og_user }} \
             -G {{ og_group }} \
             -X {{ og_upload_path }}/cluster_config.xml \
-            -h {{ groups['opengauss_expand'] | join(',') }} \
+            -h {{ groups['opengauss_ep'] | join(',') }} \
             --time-out {{ (og_all_nodes | count) * 600 }}
       changed_when: false
 

@@ -3,9 +3,14 @@
     - name: "Query cluster detail"
       ansible.builtin.command: "gs_om -t status --detail"
       changed_when: false
-      register: cluster_detail
+      register: gs_detail
       become_user: "{{ og_user }}"
       delegate_to: "{{ og_master }}"
+      run_once: true
+
+    - name: Import tasks to create runtime groups
+      ansible.builtin.import_tasks:
+        file: deploy/runtime_groups.yml
       run_once: true
 
   rescue:
@@ -14,80 +19,47 @@
         file: pre_tasks.yml
       become_user: root
 
+    - name: Import runtime tasks
+      ansible.builtin.import_tasks:
+        file: deploy/runtime_groups.yml
+
     - name: Import deploy tasks
       ansible.builtin.import_tasks:
         file: deploy/main.yml
       delegate_to: "{{ og_master }}"
       run_once: true
+      vars:
+        cm_nodes: "{{ (groups['opengauss_cm'] is defined) | ternary(groups['opengauss_cm'], '') | sort }}"
+        dn_nodes: "{{ (groups['opengauss_dn'] is defined) | ternary(groups['opengauss_dn'], '') | sort }}"
+        ep_nodes: "{{ (groups['opengauss_ep'] is defined) | ternary(groups['opengauss_ep'], '') | sort }}"
 
     - name: Repeat tasks
       ansible.builtin.include_tasks:
-        file: cluster_check.yml
+        file: deploy/cluster_check.yml
 
 - name: Mission aborted
-  run_once: true
-  when: "cluster_detail.stdout | regex_search(keywords, multiline=True, ignorecase=True)"
+  when:
+    - "gs_detail is succeeded"
+    - "gs_detail.stdout | regex_search(keywords, multiline=True, ignorecase=True)"
   vars:
     keywords: >-
       "(repair|down)"
+  run_once: true
   block:
-    - name: Print cluster status
-      ansible.builtin.debug:
-        msg: |
-          {{ cluster_detail.stdout_lines }}
-
-    - name: Abort tasks when conditions matched
+    - name: Abort tasks when cluster is unstable
       ansible.builtin.fail:
         msg: |
           集群状态有异常，请检查并手动修复后，再运行 playbook。
-          Cluster status is not NORMAL, pls fix them
+          Cluster status is not NORMAL, pls fix it
           and run the playbook again.
+          ---------------------------------------------
+          {{ gs_detail.stdout_lines }}
 
-- name: Tasks for expansion
-  when: "cluster_detail is succeeded"
-  block:
-    - name: Create expansion list
-      ansible.builtin.add_host:
-        hostname: "{{ item }}"
-        groups:
-          - opengauss_expand
-      loop: "{{ og_replicas }}"
-      when: "item not in cluster_detail.stdout"
-      run_once: true
-
-    - name: Import pre tasks
-      ansible.builtin.include_tasks:
-        file: pre_tasks.yml
-      when:
-        - "groups['opengauss_expand'] is defined"
-        - "inventory_hostname in groups['opengauss_expand']"
-
-    - name: Tasks for CM cluster
-      when:
-        - "'cmserver' not in cluster_detail.stdout"
-        - "og_cm_enabled"
-      block:
-        - name: Import cluster manager tasks
-          ansible.builtin.import_tasks:
-            file: cluster_manager.yml
-          delegate_to: "{{ og_master }}"
-          become_user: "{{ og_user }}"
-          run_once: true
-
-        - name: Refresh cluster status
-          ansible.builtin.command:
-            gs_om -t status --detail
-          changed_when: false
-          register: cluster_detail1
-          become_user: "{{ og_user }}"
-          delegate_to: "{{ og_master }}"
-          run_once: true
-
-    - name: Import cluster expand tasks
+  always:
+    - name: Import post tasks
       ansible.builtin.import_tasks:
-        file: cluster_expand.yml
-      vars:
-        og_expansion: true
-      delegate_to: "{{ og_master }}"
-      run_once: true
-      when: "groups['opengauss_expand'] is defined"
+        file: post_tasks.yml
+
+    - name: End play
+      ansible.builtin.meta:
+        end_play

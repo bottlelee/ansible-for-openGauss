@@ -71,20 +71,6 @@
     state: started
     enabled: true
 
-- name: Config /etc/hosts
-  ansible.builtin.blockinfile:
-    path: /etc/hosts
-    marker: "# {mark} OPENGAUSS NODES"
-    block: |
-      {% for node in og_all_nodes %}
-      {{ node }}  og{{ node | ipaddr('int') }} og-{{ node | replace('.', '-') }}
-      {% endfor %}
-  delegate_to: "{{ node }}"
-  loop: "{{ og_all_nodes }}"
-  loop_control:
-    loop_var: node
-  run_once: true
-
 - name: Get backIp1's iface name
   ansible.builtin.shell:
     cmd: |

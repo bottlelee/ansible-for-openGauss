@@ -1,25 +1,35 @@
-- name: Import runtime groups tasks
+- name: Import pre tasks
+  ansible.builtin.include_tasks:
+    file: pre_tasks.yml
+  when: "inventory_hostname in ep_nodes"
+
+- name: Import deploy tasks
   ansible.builtin.import_tasks:
-    file: runtime_groups.yml
+    file: deploy/main.yml
+  delegate_to: "{{ og_master }}"
+  run_once: true
 
-- name: Cluster will be expand
-  when:
-    - "og_expansion"
-  block:
-    - name: Update /etc/hosts
-      ansible.builtin.blockinfile:
-        path: /etc/hosts
-        marker: "# {mark} OPENGAUSS NODES"
-        block: |
-          {% for node in og_all_nodes %}
-          {{ node }}  og{{ node | ipaddr('int') }} og-{{ node | replace('.', '-') }}
-          {% endfor %}
-      delegate_to: "{{ node }}"
-      loop: "{{ og_all_nodes }}"
-      loop_control:
-        loop_var: node
+# # 3 节点或以上，且未部署 CM 的情况。
+# - name: Tasks for CM cluster
+#   when:
+#     - "(cm_nodes | count) < 2"
+#     - "og_cm_enabled"
+#   run_once: true
+#   block:
+#     - name: Import cluster manager tasks
+#       ansible.builtin.import_tasks:
+#         file: cluster_manager.yml
+#       delegate_to: "{{ og_master }}"
+#       become_user: "{{ og_user }}"
 
-    - name: Import deploy tasks
-      ansible.builtin.import_tasks:
-        file: deploy/main.yml
-      delegate_to: "{{ og_master }}"
+#     - name: Refresh cluster status
+#       ansible.builtin.command:
+#         gs_om -t status --detail
+#       changed_when: false
+#       register: gs_detail1
+#       become_user: "{{ og_user }}"
+#       delegate_to: "{{ og_master }}"
+
+#     - name: Import runtime groups tasks
+#       ansible.builtin.import_tasks:
+#         file: deploy/runtime_groups.yml
