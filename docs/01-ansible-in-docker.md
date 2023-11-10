@@ -2,11 +2,16 @@
 
 # 制作并启动 ansible 容器
 
-`docker-compose up -d --build`
+```
+cd ansible-docker
+docker-compose up -d --build
+```
 
 # 进入容器环境
 
-`docker exec -it ansible-for-opengauss byobu`
+```
+docker exec -it ansible-for-opengauss byobu`
+``
 
 # 声明
 
