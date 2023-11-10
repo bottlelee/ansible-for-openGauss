@@ -1,0 +1,124 @@
+# - name: Expansion list
+#   ansible.builtin.debug:
+#     msg: "{{ groups['opengauss_ep'] }}"
+
+# - ansible.builtin.debug:
+#     var: gs_detail.stdout_lines
+
+# - name: Debug
+#   ansible.builtin.debug:
+#     msg: "{{ split_line }}"
+#   loop: "{{ gs_detail.stdout_lines | sort }}"
+#   loop_control:
+#     loop_var: line
+#   when: "'cmserver' in line"
+#   vars:
+#     split_line: "{{ line | regex_replace(' {1,}', '|') | split('|') }}"
+
+# 如果已部署集群
+- name: If deployed
+  block:
+    # 不在集群里的 IP 加入到扩展节点分组。
+    - name: Create group 'opengauss_ep'
+      ansible.builtin.add_host:
+        hostname: "{{ node }}"
+        groups:
+          - opengauss_ep
+      loop: "{{ og_replicas }}"
+      loop_control:
+        loop_var: node
+      when: "node not in gs_detail.stdout"
+
+    # 按编号顺序保存现有 CM 服务器列表。
+    - name: Create current cmserver list
+      ansible.builtin.add_host:
+        hostname: "{{ node_info[3] }}_{{ node_info[1] }}"
+        groups:
+          - opengauss_cm
+        node_ip: "{{ node_info[2] }}"
+      loop: "{{ gs_detail.stdout_lines | sort }}"
+      loop_control:
+        loop_var: line
+      vars:
+        node_info: "{{ line | regex_replace(' {1,}', '|') | split('|') }}"
+      when: "'cmserver' in line"
+
+    - name: Print out current cluster manager servers
+      ansible.builtin.debug:
+        msg: "{{ groups['opengauss_cm'] }}"
+      when: "groups['opengauss_cm'] is defined"
+
+    # 按编号顺序保存现有 DN 服务器列表。
+    # 这里需要判断输出了多少列，因为有 CM 的集群里，会隐藏数据库端口 Port 的那一列。
+    - name: Create current data nodes list
+      ansible.builtin.add_host:
+        hostname: >-
+          {%- if og_cluster_config.db_port in line -%}
+            {{ node_info[4] }}_{{ node_info[1] }}_{{ node_info[7] }}
+          {%- else -%}
+            {{ node_info[3] }}_{{ node_info[1] }}_{{ node_info[6] }}
+          {%- endif -%}
+        groups:
+          - opengauss_dn
+        node_ip: "{{ node_info[2] }}"
+        node_name: "{{ node_info[1] }}"
+      loop: "{{ gs_detail.stdout_lines | sort }}"
+      loop_control:
+        loop_var: line
+        label: "{{ line }}"
+      when: "(og_data_path + '/dn') in line"
+      vars:
+        node_info: "{{ line | regex_replace(' {1,}', '|') | split('|') }}"
+
+# # 如果未部署集群
+# - name: Create init data nodes list
+#   ansible.builtin.add_host:
+#     hostname: "{{ node }}"
+#     groups:
+#       - opengauss_dn
+#     node_ip: "{{ node }}"
+#     node_name: "og{{ node | ipaddr('int') }}"
+#   loop: "{{ groups['opengauss'] }}"
+#   loop_control:
+#     loop_var: node
+#     extended: true
+#   when: "gs_detail.stdout_lines is falsy"
+
+# - name: Current data nodes
+#   ansible.builtin.debug:
+#     msg: "{{ groups['opengauss_dn'] }}"
+#   when: "groups['opengauss_dn'] is defined"
+
+# # 如果未部署 CM 且为单节点
+# - name: Create groups for CM deploy | Single node mode
+#   when:
+#     - "groups['opengauss_cm'] is not defined"
+#     - "(groups['opengauss_dn'] | count) == 1"
+#     - "og_cm_enabled"
+#   block:
+#     - name: Create init cm nodes list
+#       ansible.builtin.add_host:
+#         hostname: "{{ node }}"
+#         groups:
+#           - opengauss_cm
+#         node_ip: "{{ node }}"
+#         node_name: "og{{ node | ipaddr('int') }}"
+#       loop: "{{ groups['opengauss_ep'] | first }}"
+#       loop_control:
+#         loop_var: node
+
+#     - name: Create init dn nodes list
+#       ansible.builtin.add_host:
+#         hostname: "{{ node }}"
+#         groups:
+#           - opengauss_cm
+#         node_ip: "{{ node }}"
+#         node_name: "og{{ node | ipaddr('int') }}"
+#       loop: "{{ groups['opengauss_dn'] | first }}"
+#       loop_control:
+#         loop_var: node
+
+#     - name: Current cm nodes
+#       ansible.builtin.debug:
+#         msg: "{{ groups['opengauss_cm'] }}"
+#       when: "groups['opengauss_cm'] is defined"

@@ -33,12 +33,21 @@ opengauss_env:
         length=8
       ) | password_hash
     }}
+  ca_file_pass: >-
+    {{
+      lookup(
+        'password',
+        inventory_dir + '/credentials/opengauss_ca_file_pass',
+        chars=['ascii_letters', 'digits', 'punctuation'],
+        length=8
+      )
+    }}
   iface_mtu: 8192
   clusterName: openGauss
   dataPortBase: 15400
   cmServerPortBase: 15300
   azName: AZ1
-  swap_off: true # 关闭 swap
+  swap_off: false # 关闭 swap
   syncNum: 0 # dataNode1_syncNum
   # locale: SQL_ASCII
 
@@ -86,7 +95,7 @@ opengauss_download:
 og_hostname: "og{{ inventory_hostname | ipaddr('int') }}"
 og_all_nodes: "{{ groups['opengauss'] | sort }}"
 og_master: "{{ groups['opengauss_master'] | first }}"
-og_replicas: "{{ groups['opengauss_replica_nodes'] | sort }}"
+og_replicas: "{{ groups['opengauss_replicas'] | sort }}"
 og_upload_path: "/opt/software/openGauss"
 og_cm_enabled: "{{ (groups['opengauss'] | count) > 2 }}"
 og_expansion: false

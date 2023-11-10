@@ -1,3 +1,16 @@
+- name: Update /etc/hosts
+  ansible.builtin.blockinfile:
+    path: /etc/hosts
+    marker: "# {mark} OPENGAUSS NODES"
+    block: |
+      {% for node in og_all_nodes %}
+      {{ node }}  og{{ node | ipaddr('int') }}
+      {% endfor %}
+  delegate_to: "{{ node }}"
+  loop: "{{ og_all_nodes }}"
+  loop_control:
+    loop_var: node
+
 - name: Scan hosts key
   ansible.builtin.command: >-
     ssh-keyscan -p {{ host_port }} {{ node }},og{{ node | ipaddr('int') }}
@@ -12,15 +25,8 @@
 - name: Config known hosts
   ansible.builtin.include_tasks:
     file: deploy/known_hosts.yml
-  with_items:
-    - user: root
-      group: root
-      home: /root
-    - user: "{{ og_user }}"
-      group: "{{ og_group }}"
-      home: "/home/{{ og_user }}"
-  loop_control:
-    loop_var: og_ssh
+  vars:
+    host_keys: "{{ known_host_keys.results | map(attribute='stdout_lines') | flatten }}"
 
 - name: Config authorized keys
   ansible.builtin.include_tasks:
@@ -39,11 +45,11 @@
       changed_when: false
 
   rescue:
-    - name: Upload packages
+    - name: Import upload tasks
       ansible.builtin.import_tasks:
         file: deploy/upload.yml
 
   always:
-    - name: In progressing
+    - name: Import installation tasks
       ansible.builtin.import_tasks:
         file: deploy/install.yml

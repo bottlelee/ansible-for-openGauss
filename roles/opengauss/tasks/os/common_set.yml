@@ -18,6 +18,7 @@
     option: RemoveIPC
     value: "no"
     mode: "0644"
+  notify: Restart systemd-logind.service
 
 - name: Config /usr/lib/systemd/system/systemd-logind.service
   ini_file:
@@ -57,28 +58,18 @@
       - bison
       - nano
       - htop
-    update_cache: true
+      - "{{ python_name }}-pexpect"
+    # update_cache: true
     use: "{{ custom_pkg_mgr | default(ansible_pkg_mgr) }}"
+  register: pkg_inst
+  until: pkg_inst is succeeded
+  retries: 3
 
 - name: Enable ntpd service
   ansible.builtin.service:
     name: ntpd
     state: started
     enabled: true
-
-- name: Config /etc/hosts
-  ansible.builtin.blockinfile:
-    path: /etc/hosts
-    marker: "# {mark} OPENGAUSS NODES"
-    block: |
-      {% for node in og_all_nodes %}
-      {{ node }}  og{{ node | ipaddr('int') }} og-{{ node | replace('.', '-') }}
-      {% endfor %}
-  delegate_to: "{{ node }}"
-  loop: "{{ og_all_nodes }}"
-  loop_control:
-    loop_var: node
-  run_once: true
 
 - name: Get backIp1's iface name
   ansible.builtin.shell:
@@ -123,3 +114,13 @@
       ansible.builtin.command:
         swapoff -a
       changed_when: false
+
+- name: Config /etc/sysctl.d/50-opengauss.conf
+  ansible.posix.sysctl:
+    sysctl_file: /etc/sysctl.d/50-opengauss.conf
+    name: "{{ sysctl.key }}"
+    value: "{{ sysctl.value }}"
+  with_dict: "{{ combined_vars.opengauss_sysctl }}"
+  loop_control:
+    label: "{{ sysctl.key }} = {{ sysctl.value }}"
+    loop_var: sysctl

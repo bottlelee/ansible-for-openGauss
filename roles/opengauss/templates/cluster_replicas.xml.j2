@@ -1,19 +1,43 @@
+{% for node in dn_nodes if hostvars[node]['node_ip'] != og_master %}
 
-    <!-- CLUSTER REPLICA -->
-{% for node in (groups['opengauss_replica_nodes'] | sort) %}
+    <DEVICE sn="og{{ hostvars[node]['node_ip'] | ipaddr('int') }}">
+      <PARAM name="name" value="og{{ hostvars[node]['node_ip'] | ipaddr('int') }}"/>
+      <PARAM name="azName" value="{{ combined_vars.opengauss_env.azName | default('AZ1') }}"/>
+      <PARAM name="azPriority" value="{{ combined_vars.opengauss_env.azPriority | default('1') }}"/>
+      <PARAM name="backIp1" value="{{ hostvars[node]['node_ip'] }}"/>
+      <PARAM name="sshIp1" value="{{ hostvars[node]['node_ip'] }}"/>
+
+{% if og_cm_enabled %}
+      <!-- CLUSTER MANAGER -->
+      <PARAM name="cmServerPortStandby" value="{{ (og_cluster_config.cm_port | int) + 500 }}"/>
+      <PARAM name="cmDir" value="{{ og_data_path }}/cmserver"/>
+{% endif %}
+
+{% if hostvars[node]['node_ip'] in groups['opengauss_cascade'] %}
+      <!-- CASCADE ROLE -->
+      <PARAM name="cascadeRole" value="on"/>
+{% endif %}
+    </DEVICE>
+{% endfor %}
+
+{% for node in ep_nodes %}
+
     <DEVICE sn="og{{ node | ipaddr('int') }}">
       <PARAM name="name" value="og{{ node | ipaddr('int') }}"/>
       <PARAM name="azName" value="{{ combined_vars.opengauss_env.azName | default('AZ1') }}"/>
       <PARAM name="azPriority" value="{{ combined_vars.opengauss_env.azPriority | default('1') }}"/>
       <PARAM name="backIp1" value="{{ node }}"/>
       <PARAM name="sshIp1" value="{{ node }}"/>
-{% if (groups['opengauss'] | count) > 2 %}
+
+{% if og_cm_enabled %}
       <!-- CLUSTER MANAGER -->
-      <PARAM name="cmServerPortStandby" value="{{ combined_vars.opengauss_env.cmServerPortBase }}"/>
+      <PARAM name="cmServerPortStandby" value="{{ (og_cluster_config.cm_port | int) + 500 }}"/>
       <PARAM name="cmDir" value="{{ og_data_path }}/cmserver"/>
-      <PARAM name="cascadeRole" value="{{ (node in groups['opengauss_cascade']) | ternary('on', 'off') }}"/>
+{% endif %}
+
+{% if node in groups['opengauss_cascade'] %}
+      <!-- CASCADE ROLE -->
+      <PARAM name="cascadeRole" value="on"/>
 {% endif %}
     </DEVICE>
-
 {% endfor %}
-

@@ -2,50 +2,80 @@
 # tasks file for openGauss
 
 - name: Tasks always run
-  tags: always
   block:
-    - name: Combine vars
+    - name: Import vars combine tasks
       ansible.builtin.import_role:
         name: "pre_tasks"
         tasks_from: "vars_combine.yml"
 
-    - name: Set runtime facts
-      ansible.builtin.import_tasks: runtime_facts.yml
+    - name: Import runtime facts tasks
+      ansible.builtin.import_tasks:
+        file: runtime_facts.yml
 
-    - name: Check cluster status
+    - name: Import cluster check tasks
       ansible.builtin.import_tasks:
         file: deploy/cluster_check.yml
 
-    # - name: Cluster will be expand
-    #   when: og_expansion
-    #   block:
-    #     - name: Start pre tasks
-    #       ansible.builtin.import_tasks:
-    #         file: pre_tasks.yml
-    #       when: "inventory_hostname in groups['opengauss_expand']"
+    - name: Import cluster expand tasks
+      ansible.builtin.import_tasks:
+        file: deploy/cluster_expand.yml
+      vars:
+        cm_nodes: "{{ (groups['opengauss_cm'] is defined) | ternary(groups['opengauss_cm'], '') | sort }}"
+        dn_nodes: "{{ (groups['opengauss_dn'] is defined) | ternary(groups['opengauss_dn'], '') | sort }}"
+        ep_nodes: "{{ (groups['opengauss_ep'] is defined) | ternary(groups['opengauss_ep'], '') | sort }}"
+        # 当现有架构不足 3 节点时，先扩容数据节点（CM），再部署管理节点（CM）
+        og_expansion: true
+        og_cm_enabled: >-
+          {{
+            (
+              (groups['opengauss_cm'] is not defined)
+                and
+              (dn_nodes | count ) < 3
+            )
+            |
+            ternary(
+              false,
+              true
+            )
+          }}
+      when: "groups['opengauss_ep'] is defined"
 
-    #     - name: Update /etc/hosts
-    #       ansible.builtin.blockinfile:
-    #         path: /etc/hosts
-    #         marker: "# {mark} OPENGAUSS NODES"
-    #         block: |
-    #           {% for node in og_all_nodes %}
-    #           {{ node }}  og{{ node | ipaddr('int') }} og-{{ node | replace('.', '-') }}
-    #           {% endfor %}
-    #       delegate_to: "{{ node }}"
-    #       loop: "{{ og_all_nodes }}"
-    #       loop_control:
-    #         loop_var: node
-    #       run_once: true
+    - name: Import cluster manager deploy
+      become_user: "{{ og_user }}"
+      delegate_to: "{{ og_master }}"
+      run_once: true
+      when:
+        - "groups['opengauss_cm'] is not defined"
+        - "og_cm_enabled"
+      block:
+        - name: Import cluster checking tasks
+          ansible.builtin.import_tasks:
+            file: deploy/cluster_check.yml
 
-    #     - name: Start deploy
-    #       ansible.builtin.import_tasks:
-    #         file: deploy/main.yml
-    #       delegate_to: "{{ og_master }}"
-    #       run_once: true
+        - name: Import cluster manager deploy tasks
+          ansible.builtin.import_tasks:
+            file: deploy/cluster_manager.yml
+          vars:
+            cm_nodes: "{{ (groups['opengauss_dn'] is defined) | ternary(groups['opengauss_dn'], '') | sort }}"
+            dn_nodes: "{{ (groups['opengauss_dn'] is defined) | ternary(groups['opengauss_dn'], '') | sort }}"
+            ep_nodes: ""
+            og_expansion: false
+            og_cm_enabled: >-
+              {{
+                (
+                  (groups['opengauss_cm'] is not defined)
+                    and
+                  (dn_nodes | count ) < 3
+                )
+                |
+                ternary(
+                  false,
+                  true
+                )
+              }}
 
   always:
-    - name: Run post tasks
+    - name: Import post tasks
       ansible.builtin.import_tasks:
         file: post_tasks.yml
       tags: always

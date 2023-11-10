@@ -1,12 +1,12 @@
-- name: Config /etc/sysctl.d/50-opengauss.conf
-  ansible.posix.sysctl:
-    sysctl_file: /etc/sysctl.d/50-opengauss.conf
-    name: "{{ sysctl.key }}"
-    value: "{{ sysctl.value }}"
-  with_dict: "{{ combined_vars.opengauss_sysctl }}"
-  loop_control:
-    label: "{{ sysctl.key }} = {{ sysctl.value }}"
-    loop_var: sysctl
+# - name: Config /etc/sysctl.d/50-opengauss.conf
+#   ansible.posix.sysctl:
+#     sysctl_file: /etc/sysctl.d/50-opengauss.conf
+#     name: "{{ sysctl.key }}"
+#     value: "{{ sysctl.value }}"
+#   with_dict: "{{ combined_vars.opengauss_sysctl }}"
+#   loop_control:
+#     label: "{{ sysctl.key }} = {{ sysctl.value }}"
+#     loop_var: sysctl
 
 - name: Remove authorized key
   ansible.posix.authorized_key:
