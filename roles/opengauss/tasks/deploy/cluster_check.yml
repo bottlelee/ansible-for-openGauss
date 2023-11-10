@@ -22,6 +22,7 @@
     - name: Import runtime tasks
       ansible.builtin.import_tasks:
         file: deploy/runtime_groups.yml
+      run_once: true
 
     - name: Import deploy tasks
       ansible.builtin.import_tasks:
@@ -29,13 +30,14 @@
       delegate_to: "{{ og_master }}"
       run_once: true
       vars:
-        cm_nodes: "{{ (groups['opengauss_cm'] is defined) | ternary(groups['opengauss_cm'], '') | sort }}"
-        dn_nodes: "{{ (groups['opengauss_dn'] is defined) | ternary(groups['opengauss_dn'], '') | sort }}"
+        cm_nodes: "{{ (og_all_nodes | count > 2) | ternary(og_all_nodes, '') | sort }}"
+        dn_nodes: "{{ groups['opengauss_dn'] | sort }}"
         ep_nodes: "{{ (groups['opengauss_ep'] is defined) | ternary(groups['opengauss_ep'], '') | sort }}"
+        og_cm_enabled: "{{ og_all_nodes | count > 2 }}"
 
-    - name: Repeat tasks
-      ansible.builtin.include_tasks:
-        file: deploy/cluster_check.yml
+#    - name: Repeat tasks
+#      ansible.builtin.include_tasks:
+#        file: deploy/cluster_check.yml
 
 - name: Mission aborted
   when:

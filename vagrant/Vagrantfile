@@ -13,8 +13,8 @@ Vagrant.configure("2") do |config|
   config.vm.guest = "centos"
 
   config.vm.provider "virtualbox" do |vb|
-    vb.memory = 4096
-    vb.cpus = 4
+    vb.memory = 1024 * 16
+    vb.cpus = 8
     vb.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
     vb.linked_clone = true
     vb.check_guest_additions = false
@@ -31,7 +31,7 @@ Vagrant.configure("2") do |config|
   config.vm.synced_folder ".", "/vagrant", disabled: true
 
   # How many vm do you want?
-  N = 9
+  N = 3
 
   (1..N).each do |i|
     config.vm.define "opengauss#{i}" do |node|
