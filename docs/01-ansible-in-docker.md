@@ -10,8 +10,8 @@ docker-compose up -d --build
 # 进入容器环境
 
 ```
-docker exec -it ansible-for-opengauss byobu`
-``
+docker exec -it ansible-for-opengauss byobu
+```
 
 # 声明
 
