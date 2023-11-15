@@ -29,9 +29,6 @@
     mode: "0644"
   notify: Restart systemd-logind.service
 
-- name: Flush handlers
-  ansible.builtin.meta: flush_handlers
-
 - name: Disable history command logs
   ansible.builtin.lineinfile:
     path: /etc/profile
@@ -124,3 +121,4 @@
   loop_control:
     label: "{{ sysctl.key }} = {{ sysctl.value }}"
     loop_var: sysctl
+

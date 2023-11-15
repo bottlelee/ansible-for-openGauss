@@ -1,6 +1,6 @@
 - name: Config ssh on host
   block:
-    - name: "Create '.ssh' under {{ og_ssh.home }}"
+    - name: "Create path {{ og_ssh.home + '/.ssh' }}"
       ansible.builtin.file:
         path: "{{ og_ssh.home }}/.ssh"
         state: directory

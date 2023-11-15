@@ -36,3 +36,6 @@
       home: "/home/{{ og_user }}"
   loop_control:
     loop_var: og_ssh
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers

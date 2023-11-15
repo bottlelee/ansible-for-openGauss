@@ -1,0 +1,3 @@
+- name: Check virtual machines status
+  ansible.builtin.import_role:
+    name: vagrant

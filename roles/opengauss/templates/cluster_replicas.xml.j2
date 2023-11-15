@@ -10,7 +10,7 @@
 {% if og_cm_enabled %}
       <!-- CLUSTER MANAGER -->
       <PARAM name="cmServerPortStandby" value="{{ (og_cluster_config.cm_port | int) + 500 }}"/>
-      <PARAM name="cmDir" value="{{ og_data_path }}/cmserver"/>
+      <PARAM name="cmDir" value="{{ og_data_path }}/cm"/>
 {% endif %}
 
 {% if hostvars[node]['node_ip'] in groups['opengauss_cascade'] %}
@@ -32,7 +32,7 @@
 {% if og_cm_enabled %}
       <!-- CLUSTER MANAGER -->
       <PARAM name="cmServerPortStandby" value="{{ (og_cluster_config.cm_port | int) + 500 }}"/>
-      <PARAM name="cmDir" value="{{ og_data_path }}/cmserver"/>
+      <PARAM name="cmDir" value="{{ og_data_path }}/cm"/>
 {% endif %}
 
 {% if node in groups['opengauss_cascade'] %}

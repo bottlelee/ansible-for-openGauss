@@ -4,17 +4,15 @@
       ansible.builtin.import_tasks:
         file: upload.yml
       become_user: root
-      # run_once: true
 
     - name: Get cm package name
       ansible.builtin.set_fact:
         cm_pkg: "{{ file }}"
-      loop: "{{ og_upload.files | default([]) }}"
+      loop: "{{ og_upload.files }}"
       loop_control:
         loop_var: file
       when:
         - "'cm.tar.gz' in file"
-      # run_once: true
 
     - name: "Change file permission of {{ cm_pkg }}"
       ansible.builtin.file:
@@ -23,7 +21,6 @@
         group: "{{ og_group }}"
         mode: "0640"
       become_user: root
-      # run_once: true
 
     - name: Create some paths
       ansible.builtin.file:
@@ -48,7 +45,7 @@
       loop: "{{ og_all_nodes }}"
       delegate_to: "{{ item }}"
 
-    # 这里需要建一个假的定时任务，包含 'om_monitor'。后续 cm_install 时会检查，否则失败。
+    # 这里需要建一个假的定时任务，包含 'om_monitor'。后续 cm_install 时会检查替换，否则失败。
     - name: Fake an om_monitor cron job before install
       ansible.builtin.cron:
         name: openGauss om monitor
@@ -91,23 +88,17 @@
       loop: "{{ dn_nodes }}"
       loop_control:
         loop_var: node
+        pause: 15
       delegate_to: "{{ hostvars[node]['node_ip'] }}"
-      when: "'Standby' in node"
+      when: "'Primary' not in node"
       register: switchover_status
       until: "switchover_status is succeeded"
       retries: 9
       delay: 5
 
-    # - name: Select a standby node and the primary node
-    #   ansible.builtin.set_fact:
-    #     standby_nodes: >-
-    #       {% for node in dn_nodes if 'Standby' in node %}
-    #       {{ hostvars[node]['node_ip'] }}
-    #       {% endfor %}
-    #     primary_nodes: >-
-    #       {% for node in dn_nodes if 'Primary' in node %}
-    #       {{ hostvars[node]['node_ip'] }}
-    #       {% endfor %}
+    - name: Import 'wait_for_started' tasks
+      ansible.builtin.import_tasks:
+        file: wait_for_started.yml
 
     - name: "Step 2 | Switchover back to {{ og_master }}"
       ansible.builtin.command:
@@ -118,15 +109,14 @@
         loop_var: node
       delegate_to: "{{ hostvars[node]['node_ip'] }}"
       when: "'Primary' in node"
-      register: switchover_status
-      until: "switchover_status is succeeded"
+      register: switchback_status
+      until: "switchback_status is succeeded"
       retries: 9
       delay: 5
 
-    # - name: Stop all nodes
-    #   ansible.builtin.command:
-    #     gs_om -t stop
-    #   changed_when: false
+    - name: Import 'wait_for_started' tasks
+      ansible.builtin.import_tasks:
+        file: wait_for_started.yml
 
     - name: Install CM
       ansible.builtin.expect:
@@ -155,44 +145,8 @@
         file: cluster_manager.yml
 
   always:
-    # - name: Debug
-    #   ansible.builtin.debug:
-    #     var: cm_install
 
-    # - name: Start the primary data node
-    #   ansible.builtin.command:
-    #     "gs_om -t start -h {{ hostvars[node]['node_name'] }}"
-    #   loop: "{{ dn_nodes }}"
-    #   loop_control:
-    #     loop_var: node
-    #   when: "'Primary' in node"
-    #   changed_when: false
+    - name: Import 'wait_for_started' tasks
+      ansible.builtin.import_tasks:
+        file: wait_for_started.yml
 
-    # - name: Wait for primary node started
-    #   ansible.builtin.wait_for:
-    #     host: "{{ hostvars[node]['node_ip'] }}"
-    #     port: "{{ og_cluster_config.db_port }}"
-    #     timeout: "600"
-    #   loop: "{{ dn_nodes }}"
-    #   loop_control:
-    #     loop_var: node
-    #   when: "'Primary' in node"
-    #   changed_when: false
-
-    # - name: Start the rest of data nodes
-    #   ansible.builtin.command:
-    #     "gs_om -t start -h {{ hostvars[node]['node_name'] }}"
-    #   loop: "{{ dn_nodes }}"
-    #   loop_control:
-    #     loop_var: node
-    #   when: "'Primary' not in node"
-    #   changed_when: false
-
-    - name: Wait for the cluster started
-      ansible.builtin.command:
-        "gs_om -t status"
-      register: gs_status
-      until: "'Normal' in gs_status.stdout"
-      retries: 30
-      delay: 10
-      changed_when: false

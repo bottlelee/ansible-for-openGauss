@@ -10,10 +10,14 @@
     <PARAM name="nodeNames" value="og3232249867
       ,og3232249868
       ,og3232249869
+      ,og3232249870
+      ,og3232249871
     "/>
     <PARAM name="backIp1s" value="192.168.56.11
       ,192.168.56.12
       ,192.168.56.13
+      ,192.168.56.14
+      ,192.168.56.15
     "/>
   </CLUSTER>
 
@@ -34,24 +38,13 @@
       <PARAM name="dataNode1" value="/opt/openGauss/data/dn
         ,og3232249868,/opt/openGauss/data/dn
         ,og3232249869,/opt/openGauss/data/dn
+        ,og3232249870,/opt/openGauss/data/dn
+        ,og3232249871,/opt/openGauss/data/dn
       "/>
-      <PARAM name="dataNode1_syncNum" value="0"/><!-- CLUSTER MANAGER -->
-      <PARAM name="cmsNum" value="1"/>
-      <PARAM name="cmServerPortBase" value="15300"/>
-      <PARAM name="cmServerlevel" value="1"/>
-      <PARAM name="cmDir" value="/opt/openGauss/data/cmserver"/>
-      <PARAM name="cmServerRelation" value="og3232249867
-        ,og3232249868
-        ,og3232249869
-      "/>
-      <PARAM name="cmServerListenIp1" value="192.168.56.11
-        ,192.168.56.12
-        ,192.168.56.13
-      "/>
-      <PARAM name="cmServerHaIp1" value="192.168.56.11
-        ,192.168.56.12
-        ,192.168.56.13
-      "/></DEVICE>
+      <PARAM name="dataNode1_syncNum" value="0"/>
+
+    </DEVICE>
+
 
 
     <DEVICE sn="og3232249868">
@@ -61,9 +54,6 @@
       <PARAM name="backIp1" value="192.168.56.12"/>
       <PARAM name="sshIp1" value="192.168.56.12"/>
 
-      <!-- CLUSTER MANAGER -->
-      <PARAM name="cmServerPortStandby" value="15800"/>
-      <PARAM name="cmDir" value="/opt/openGauss/data/cmserver"/>
 
     </DEVICE>
 
@@ -74,14 +64,32 @@
       <PARAM name="backIp1" value="192.168.56.13"/>
       <PARAM name="sshIp1" value="192.168.56.13"/>
 
-      <!-- CLUSTER MANAGER -->
-      <PARAM name="cmServerPortStandby" value="15800"/>
-      <PARAM name="cmDir" value="/opt/openGauss/data/cmserver"/>
 
       <!-- CASCADE ROLE -->
       <PARAM name="cascadeRole" value="on"/>
     </DEVICE>
 
+    <DEVICE sn="og3232249870">
+      <PARAM name="name" value="og3232249870"/>
+      <PARAM name="azName" value="AZ1"/>
+      <PARAM name="azPriority" value="1"/>
+      <PARAM name="backIp1" value="192.168.56.14"/>
+      <PARAM name="sshIp1" value="192.168.56.14"/>
+
+
+      <!-- CASCADE ROLE -->
+      <PARAM name="cascadeRole" value="on"/>
+    </DEVICE>
+
+    <DEVICE sn="og3232249871">
+      <PARAM name="name" value="og3232249871"/>
+      <PARAM name="azName" value="AZ1"/>
+      <PARAM name="azPriority" value="1"/>
+      <PARAM name="backIp1" value="192.168.56.15"/>
+      <PARAM name="sshIp1" value="192.168.56.15"/>
+
+
+    </DEVICE>
 
 
   </DEVICELIST>

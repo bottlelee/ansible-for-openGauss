@@ -23,21 +23,8 @@
         cm_nodes: "{{ (groups['opengauss_cm'] is defined) | ternary(groups['opengauss_cm'], '') | sort }}"
         dn_nodes: "{{ (groups['opengauss_dn'] is defined) | ternary(groups['opengauss_dn'], '') | sort }}"
         ep_nodes: "{{ (groups['opengauss_ep'] is defined) | ternary(groups['opengauss_ep'], '') | sort }}"
-        # 当现有架构不足 3 节点时，先扩容数据节点（CM），再部署管理节点（CM）
         og_expansion: true
-        og_cm_enabled: >-
-          {{
-            (
-              (groups['opengauss_cm'] is not defined)
-                and
-              (dn_nodes | count ) < 3
-            )
-            |
-            ternary(
-              false,
-              true
-            )
-          }}
+        og_cm_enabled: "{{ (groups['opengauss_cm'] is defined) | ternary(true, false) }}"
       when: "groups['opengauss_ep'] is defined"
 
     - name: Import cluster manager deploy
@@ -60,19 +47,6 @@
             dn_nodes: "{{ (groups['opengauss_dn'] is defined) | ternary(groups['opengauss_dn'], '') | sort }}"
             ep_nodes: ""
             og_expansion: false
-            og_cm_enabled: >-
-              {{
-                (
-                  (groups['opengauss_cm'] is not defined)
-                    and
-                  (dn_nodes | count ) < 3
-                )
-                |
-                ternary(
-                  false,
-                  true
-                )
-              }}
 
   always:
     - name: Import post tasks

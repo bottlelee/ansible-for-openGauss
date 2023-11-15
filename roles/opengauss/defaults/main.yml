@@ -38,7 +38,7 @@ opengauss_env:
       lookup(
         'password',
         inventory_dir + '/credentials/opengauss_ca_file_pass',
-        chars=['ascii_letters', 'digits', 'punctuation'],
+        chars=['ascii_letters', 'digits'],
         length=8
       )
     }}
@@ -94,7 +94,7 @@ opengauss_download:
 # 默认初始值
 og_hostname: "og{{ inventory_hostname | ipaddr('int') }}"
 og_all_nodes: "{{ groups['opengauss'] | sort }}"
-og_master: "{{ groups['opengauss_master'] | first }}"
+og_master: "{{ groups['opengauss_primary'] | first }}"
 og_replicas: "{{ groups['opengauss_replicas'] | sort }}"
 og_upload_path: "/opt/software/openGauss"
 og_cm_enabled: "{{ (groups['opengauss'] | count) > 2 }}"

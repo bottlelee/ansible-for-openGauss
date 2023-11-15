@@ -1,0 +1,22 @@
+- name: Wait for the cluster started
+  become_user: "{{ og_user }}"
+  block:
+    - name: Checking status
+      ansible.builtin.command:
+        "gs_om -t status"
+      register: gs_status
+      until: "gs_status.stdout_lines | regex_search('cluster_state.*Normal')"
+      retries: 30
+      delay: 10
+      changed_when: false
+
+  rescue:
+    - name: Print out cluster status
+      ansible.builtin.debug:
+        msg: |
+          {{ gs_status.stdout_lines }}
+
+  always:
+    - name: Play aborted
+      ansible.builtin.meta:
+        end_play

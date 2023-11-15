@@ -20,11 +20,11 @@
 
 ```
 ; 主服务器组，仅设置 1 个目标机。
-[opengauss_master]
+[opengauss_primary]
 192.168.56.11
 
 ; 从服务器组，可设置若干个或留空。
-[opengauss_follower]
+[opengauss_standby]
 192.168.56.12
 ```
 
@@ -32,11 +32,11 @@
 
 ```
 ; 主服务器组，仅设置 1 个目标机。
-[opengauss_master]
+[opengauss_primary]
 192.168.56.11
 
 ; 从服务器组，可设置若干个或留空。
-[opengauss_follower]
+[opengauss_standby]
 192.168.56.12
 192.168.56.14
 192.168.56.16
@@ -51,5 +51,11 @@
 ## 扩容
 
 再次执行 `pansible 01-deploy.yml`。
+
+同时，你可以登入到主节点，切换到 root 去查看部署过程中的日志，了解进度。
+
+```
+tail -n100 -F /var/log/omm/**/*.log
+```
 
 ![扩容结果](imgs/23-10-13_1155_909.png)
