@@ -14,30 +14,17 @@
       run_once: true
 
   rescue:
-    - name: Import pre tasks
+    - name: Import OS config tasks
       ansible.builtin.import_tasks:
-        file: pre_tasks.yml
+        file: os/main.yml
       become_user: root
 
-    - name: Import runtime tasks
+    - name: Import cluster deploy tasks
       ansible.builtin.import_tasks:
-        file: deploy/runtime_groups.yml
-      run_once: true
-
-    - name: Import deploy tasks
-      ansible.builtin.import_tasks:
-        file: deploy/main.yml
+        file: deploy/cluster_deploy.yml
       delegate_to: "{{ og_master }}"
+      become_user: "{{ og_user }}"
       run_once: true
-      vars:
-        cm_nodes: "{{ (og_all_nodes | count > 2) | ternary(og_all_nodes, '') | sort }}"
-        dn_nodes: "{{ groups['opengauss_dn'] | sort }}"
-        ep_nodes: "{{ (groups['opengauss_ep'] is defined) | ternary(groups['opengauss_ep'], '') | sort }}"
-        og_cm_enabled: "{{ og_all_nodes | count > 2 }}"
-
-#    - name: Repeat tasks
-#      ansible.builtin.include_tasks:
-#        file: deploy/cluster_check.yml
 
 - name: Mission aborted
   when:
@@ -45,7 +32,7 @@
     - "gs_detail.stdout | regex_search(keywords, multiline=True, ignorecase=True)"
   vars:
     keywords: >-
-      "(repair|down)"
+      "(repair|down|disconnect|build)"
   run_once: true
   block:
     - name: Abort tasks when cluster is unstable

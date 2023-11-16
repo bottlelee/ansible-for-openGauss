@@ -2,8 +2,8 @@
   ansible.builtin.include_tasks:
     file: "{{ item }}"
   with_first_found:
-    - "os/{{ ansible_distribution | replace(' ', '_') }}.yml"
-    - "os/not_supported.yml"
+    - "{{ ansible_distribution | replace(' ', '_') }}.yml"
+    - "not_supported.yml"
 
 - name: Import Common tasks for all distribution
   ansible.builtin.import_tasks:
@@ -13,12 +13,12 @@
   ansible.builtin.include_tasks:
     file: "{{ item }}"
   with_first_found:
-    - "os/{{ ansible_os_family }}.yml"
-    - "os/not_supported.yml"
+    - "{{ ansible_os_family }}.yml"
+    - "not_supported.yml"
 
 - name: Import user config tasks
   ansible.builtin.include_tasks:
-    file: os/user.yml
+    file: user.yml
   with_items: "{{ groups['opengauss_ep'] | default(og_all_nodes) }}"
   loop_control:
     loop_var: node
@@ -26,7 +26,7 @@
 
 - name: Import ssh config tasks
   ansible.builtin.include_tasks:
-    file: os/ssh.yml
+    file: ssh.yml
   with_items:
     - user: root
       group: root

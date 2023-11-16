@@ -48,8 +48,10 @@
     - name: Import upload tasks
       ansible.builtin.import_tasks:
         file: deploy/upload.yml
+      run_once: true
 
   always:
     - name: Import installation tasks
       ansible.builtin.import_tasks:
         file: deploy/install.yml
+      run_once: true

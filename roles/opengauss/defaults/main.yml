@@ -14,7 +14,7 @@ og_disable_history: false
 # 具体请看 https://docs.opengauss.org/zh/docs/{{ opengauss_version }}/docs/InstallationGuide/%E5%88%9B%E5%BB%BAXML%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6.html
 opengauss_paths:
   gaussdbAppPath: "{{ opengauss_home }}/install/app"
-  gaussdbLogPath: "/var/log/"
+  gaussdbLogPath: "/var/log"
   tmpMppdbPath: "{{ opengauss_home }}/tmp"
   corePath: "{{ opengauss_home }}/corefile"
   gaussdbToolPath: "{{ opengauss_home }}/install/om"
@@ -99,3 +99,4 @@ og_replicas: "{{ groups['opengauss_replicas'] | sort }}"
 og_upload_path: "/opt/software/openGauss"
 og_cm_enabled: "{{ (groups['opengauss'] | count) > 2 }}"
 og_expansion: false
+og_preinstall: false

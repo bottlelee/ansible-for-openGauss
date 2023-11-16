@@ -1,9 +1,17 @@
-- name: Deploy CM into existing data cluster
+- name: Set CM facts
+  ansible.builtin.set_fact:
+    cm_nodes: "{{ (groups['opengauss_dn'] is defined) | ternary(groups['opengauss_dn'], '') | sort }}"
+    dn_nodes: "{{ (groups['opengauss_dn'] is defined) | ternary(groups['opengauss_dn'], '') | sort }}"
+    ep_nodes: ""
+    og_cm_enabled: true
+    og_expansion: false
+
+- name: Root tasks
+  become_user: root
   block:
     - name: Import upload tasks
       ansible.builtin.import_tasks:
         file: upload.yml
-      become_user: root
 
     - name: Get cm package name
       ansible.builtin.set_fact:
@@ -20,7 +28,6 @@
         owner: "{{ og_user }}"
         group: "{{ og_group }}"
         mode: "0640"
-      become_user: root
 
     - name: Create some paths
       ansible.builtin.file:
@@ -30,7 +37,6 @@
         group: "{{ og_group }}"
         mode: "0750"
       delegate_to: "{{ item.1 }}"
-      become_user: root
       with_nested:
         - ['{{ og_log_path }}/omm/cm/cm_server', '{{ og_log_path }}/omm/cm/cm_agent']
         - "{{ og_all_nodes }}"
@@ -41,112 +47,75 @@
       ansible.builtin.file:
         path: "/opt/openGauss/install/om/{{ cm_pkg }}"
         state: absent
-      become_user: root
       loop: "{{ og_all_nodes }}"
       delegate_to: "{{ item }}"
 
-    # 这里需要建一个假的定时任务，包含 'om_monitor'。后续 cm_install 时会检查替换，否则失败。
-    - name: Fake an om_monitor cron job before install
-      ansible.builtin.cron:
-        name: openGauss om monitor
-        special_time: yearly
-        job: "{{ og_home }}/install/app/bin/om_monitor"
-      loop: "{{ dn_nodes }}"
-      loop_control:
-        loop_var: node
-        label: "{{ hostvars[node]['node_ip'] }}"
-      delegate_to: "{{ hostvars[node]['node_ip'] }}"
+    - name: Import pre tasks
+      ansible.builtin.import_tasks:
+        file: deploy/cluster_pre_tasks.yml
 
-    - name: "Create cluster_config.xml in local path '{{ inventory_dir }}'"
-      ansible.builtin.template:
-        src: "{{ item }}"
-        dest: "{{ inventory_dir }}/cluster_config.xml"
-        owner: "{{ og_user }}"
-        group: "{{ og_group }}"
-        mode: "0644"
-        lstrip_blocks: true
-      with_first_found:
-        - "{{ inventory_dir }}/templates/cluster_config.xml.j2"
-        - "cluster_config.xml.j2"
-      delegate_to: localhost
-      become: false
-      # run_once: true
+    - name: Import config generate tasks
+      ansible.builtin.import_tasks:
+        file: deploy/cluster_config_generate.yml
 
-    - name: "Upload cluster_config.xml to {{ og_upload_path }}"
-      ansible.builtin.copy:
-        src: "{{ inventory_dir }}/cluster_config.xml"
-        dest: "{{ og_upload_path }}/"
-        owner: "{{ og_user }}"
-        group: "{{ og_group }}"
-        mode: "0644"
-        backup: true
+# 这里需要建一个假的定时任务，包含 'om_monitor'。后续 cm_install 时会检查替换，否则失败。
+- name: Fake an om_monitor cron job before install
+  ansible.builtin.cron:
+    name: openGauss om monitor
+    special_time: yearly
+    job: "{{ og_home }}/install/app/bin/om_monitor"
+  loop: "{{ dn_nodes }}"
+  loop_control:
+    loop_var: node
+    label: "{{ hostvars[node]['node_ip'] }}"
+  delegate_to: "{{ hostvars[node]['node_ip'] }}"
 
-    - name: Step 1 | Switchover once to avoid 'Term of primary is invalid or not maximal' error
+# 集群增加 CM 工具
+- name: Deploy CM tool
+  when:
+    - "groups['opengauss_cm'] is not defined"
+    - "og_cm_enabled"
+  block:
+    - name: Switchover to fix 'Term of primary is invalid or not maximal' error
       ansible.builtin.command:
         gs_ctl switchover -D {{ og_data_path }}/dn
       changed_when: false
-      loop: "{{ dn_nodes }}"
+      when:
+        - "'Primary' not in node"
+        - "ansible_loop.index < 3"
+      loop: "{{ dn_nodes | reject('search', 'Primary') | sort(reverse=True) }}"
       loop_control:
         loop_var: node
         pause: 15
+        extended: true
       delegate_to: "{{ hostvars[node]['node_ip'] }}"
-      when: "'Primary' not in node"
-      register: switchover_status
-      until: "switchover_status is succeeded"
-      retries: 9
-      delay: 5
 
     - name: Import 'wait_for_started' tasks
       ansible.builtin.import_tasks:
         file: wait_for_started.yml
 
-    - name: "Step 2 | Switchover back to {{ og_master }}"
-      ansible.builtin.command:
-        gs_ctl switchover -D {{ og_data_path }}/dn
-      changed_when: false
-      loop: "{{ dn_nodes }}"
-      loop_control:
-        loop_var: node
-      delegate_to: "{{ hostvars[node]['node_ip'] }}"
-      when: "'Primary' in node"
-      register: switchback_status
-      until: "switchback_status is succeeded"
-      retries: 9
-      delay: 5
+    - name: Tips
+      ansible.builtin.debug:
+        msg: |
+          Next task might take a while.
+          Please wait for it complete.
 
-    - name: Import 'wait_for_started' tasks
-      ansible.builtin.import_tasks:
-        file: wait_for_started.yml
-
-    - name: Install CM
+    - name: Deploy CM tool
       ansible.builtin.expect:
         command: "./cm_install -X {{ og_upload_path }}/cluster_config.xml --cmpkg {{ og_upload_path }}/{{ cm_pkg }}"
         responses:
           (?i)password: "{{ og_ca_pass }}"
         chdir: "{{ og_home }}/install/app/tool/cm_tool"
+        timeout: "{{ (dn_nodes | count) * 300 }}"
       changed_when: false
       register: cm_install
       until:
         - "cm_install.stdout is defined"
         - "'CM exists' in cm_install.stdout"
-      retries: 3
-      timeout: 300
+      retries: 2
       ignore_errors: true
-      become_user: "{{ og_user }}"
 
-  rescue:
-    - name: Install pexpect
-      ansible.builtin.package:
-        name: "{{ python_name }}-pexpect"
-      become_user: root
-
-    - name: Repeat tasks
-      ansible.builtin.include_tasks:
-        file: cluster_manager.yml
-
-  always:
-
-    - name: Import 'wait_for_started' tasks
-      ansible.builtin.import_tasks:
-        file: wait_for_started.yml
-
+    - name: Refresh cluster config
+      ansible.builtin.command:
+        gs_om -t refreshconf
+      changed_when: false

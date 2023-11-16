@@ -32,7 +32,7 @@
     同时，你可以登入到主节点，切换到 root 去查看部署过程中的日志，了解进度。
 
     ```
-    tail -n100 -F /var/log/omm/**/*.log
+    tail -n100 -f /var/log/omm/**/*.log
     ```
 
 1. 部署过程中自动生成的公私钥，以及账号密码，存放在 `/workdir/inventories/opengauss/credentials`

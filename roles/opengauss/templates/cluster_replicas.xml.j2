@@ -1,5 +1,4 @@
 {% for node in dn_nodes if hostvars[node]['node_ip'] != og_master %}
-
     <DEVICE sn="og{{ hostvars[node]['node_ip'] | ipaddr('int') }}">
       <PARAM name="name" value="og{{ hostvars[node]['node_ip'] | ipaddr('int') }}"/>
       <PARAM name="azName" value="{{ combined_vars.opengauss_env.azName | default('AZ1') }}"/>
@@ -18,26 +17,24 @@
       <PARAM name="cascadeRole" value="on"/>
 {% endif %}
     </DEVICE>
+
 {% endfor %}
-
 {% for node in ep_nodes %}
-
     <DEVICE sn="og{{ node | ipaddr('int') }}">
       <PARAM name="name" value="og{{ node | ipaddr('int') }}"/>
       <PARAM name="azName" value="{{ combined_vars.opengauss_env.azName | default('AZ1') }}"/>
       <PARAM name="azPriority" value="{{ combined_vars.opengauss_env.azPriority | default('1') }}"/>
       <PARAM name="backIp1" value="{{ node }}"/>
       <PARAM name="sshIp1" value="{{ node }}"/>
-
 {% if og_cm_enabled %}
       <!-- CLUSTER MANAGER -->
       <PARAM name="cmServerPortStandby" value="{{ (og_cluster_config.cm_port | int) + 500 }}"/>
       <PARAM name="cmDir" value="{{ og_data_path }}/cm"/>
 {% endif %}
-
 {% if node in groups['opengauss_cascade'] %}
       <!-- CASCADE ROLE -->
       <PARAM name="cascadeRole" value="on"/>
 {% endif %}
     </DEVICE>
+
 {% endfor %}

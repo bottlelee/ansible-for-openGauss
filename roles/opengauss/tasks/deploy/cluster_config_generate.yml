@@ -1,0 +1,42 @@
+- name: "Create local file {{ inventory_dir + 'cluster_config.xml' }}"
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: "{{ inventory_dir }}/cluster_config.xml"
+    owner: "{{ og_user }}"
+    group: "{{ og_group }}"
+    mode: "0644"
+    lstrip_blocks: true
+  with_first_found:
+    - "{{ inventory_dir }}/templates/cluster_config.xml.j2"
+    - "cluster_config.xml.j2"
+  delegate_to: localhost
+  become: false
+
+- name: "Upload cluster_config.xml to {{ og_upload_path + '/cluster_config.xml' }}"
+  ansible.builtin.copy:
+    src: "{{ inventory_dir }}/cluster_config.xml"
+    dest: "{{ og_upload_path }}/"
+    owner: "{{ og_user }}"
+    group: "{{ og_group }}"
+    mode: "0644"
+    backup: true
+
+- name: Tips
+  ansible.builtin.debug:
+    msg: |
+      Next task might take a while.
+      Please wait for it complete.
+  when: "og_preinstall"
+
+# 预部署脚本
+- name: "Run {{ og_upload_path + '/script/gs_preinstall' }}"
+  ansible.builtin.command: >-
+    {{ og_upload_path }}/script/gs_preinstall \
+      -U {{ og_user }} \
+      -G {{ og_group }} \
+      -X {{ og_upload_path }}/cluster_config.xml \
+      --non-interactive
+  changed_when: false
+  become_user: root
+  when: "og_preinstall"
+  delegate_to: "{{ og_master }}"

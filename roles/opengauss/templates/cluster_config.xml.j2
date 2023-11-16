@@ -28,8 +28,6 @@
   <DEVICELIST>
 
 {{ lookup('ansible.builtin.template', 'cluster_master.xml.j2') }}
-
 {{ lookup('ansible.builtin.template', 'cluster_replicas.xml.j2') }}
-
   </DEVICELIST>
 </ROOT>

@@ -70,6 +70,14 @@ combined_vars:
 
 # 使用自定义的 cluster_config.xml
 
-如果你需要手动定制集群，这里也是支持的，只需要把写好的 `cluster_config.xml` 改名为 `cluster_config.xml.j2`，存放到 `/workdir/inventories/opengauss/templates/cluster_config.xml.j2`，部署时会优先使用你的自定义配置。
+如果你需要手动定制集群，这里也是支持的。
 
-接下来就可以[开始部署](03-deploy.md)
+前提：
+
+  1. 确保 `/workdir/inventories/opengauss/hosts.ini` 的角色编排，和你的 `cluster_config.xml` 内容一致。
+
+  2. 已有节点的编号顺序，在 `cluster_config.xml` 需要严格保持一致。
+
+然后把写好的 `cluster_config.xml` 改名为 `cluster_config.xml.j2`，存放到 `/workdir/inventories/opengauss/templates/cluster_config.xml.j2`，部署时会优先使用你的自定义配置。
+
+接下来就可以 [开始部署](03-deploy.md)。

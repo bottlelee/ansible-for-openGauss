@@ -22,12 +22,12 @@
         recurse: true
 
     - name: "Config command alias for user '{{ og_user }}'"
-      ansible.builtin.lineinfile:
+      ansible.builtin.blockinfile:
         path: "/home/{{ og_user }}/.bashrc"
         create: true
-        line: "{{ item }}"
+        block: |
+          alias gs_detail='gs_om -t status --detail'
+        marker: "# {mark} OPENGAUSS COMMAND ALIAS"
         owner: "{{ og_user }}"
         group: "{{ og_group }}"
         mode: "0644"
-      with_items:
-        - "alias gs_detail='gs_om -t status --detail'"

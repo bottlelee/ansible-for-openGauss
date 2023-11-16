@@ -19,34 +19,18 @@
     - name: Import cluster expand tasks
       ansible.builtin.import_tasks:
         file: deploy/cluster_expand.yml
-      vars:
-        cm_nodes: "{{ (groups['opengauss_cm'] is defined) | ternary(groups['opengauss_cm'], '') | sort }}"
-        dn_nodes: "{{ (groups['opengauss_dn'] is defined) | ternary(groups['opengauss_dn'], '') | sort }}"
-        ep_nodes: "{{ (groups['opengauss_ep'] is defined) | ternary(groups['opengauss_ep'], '') | sort }}"
-        og_expansion: true
-        og_cm_enabled: "{{ (groups['opengauss_cm'] is defined) | ternary(true, false) }}"
       when: "groups['opengauss_ep'] is defined"
+      become_user: root
 
-    - name: Import cluster manager deploy
+    - name: Import cluster manager deploy tasks
       become_user: "{{ og_user }}"
       delegate_to: "{{ og_master }}"
       run_once: true
+      ansible.builtin.import_tasks:
+        file: deploy/cluster_manager.yml
       when:
         - "groups['opengauss_cm'] is not defined"
-        - "og_cm_enabled"
-      block:
-        - name: Import cluster checking tasks
-          ansible.builtin.import_tasks:
-            file: deploy/cluster_check.yml
-
-        - name: Import cluster manager deploy tasks
-          ansible.builtin.import_tasks:
-            file: deploy/cluster_manager.yml
-          vars:
-            cm_nodes: "{{ (groups['opengauss_dn'] is defined) | ternary(groups['opengauss_dn'], '') | sort }}"
-            dn_nodes: "{{ (groups['opengauss_dn'] is defined) | ternary(groups['opengauss_dn'], '') | sort }}"
-            ep_nodes: ""
-            og_expansion: false
+        - "groups['opengauss_dn'] | count > 2"
 
   always:
     - name: Import post tasks

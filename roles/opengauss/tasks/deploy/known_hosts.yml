@@ -14,7 +14,7 @@
     loop_var: node
   delegate_to: "{{ node }}"
 
-- name: "Update ~/.ssh/known_hosts for user '{{ og_user }}'"
+- name: "Update '{{ '/home/' + og_user + '/.ssh/known_hosts' }}'"
   ansible.builtin.blockinfile:
     path: "/home/{{ og_user }}/.ssh/known_hosts"
     owner: "{{ og_user }}"

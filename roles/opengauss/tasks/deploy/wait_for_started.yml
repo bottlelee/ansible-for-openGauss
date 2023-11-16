@@ -3,9 +3,11 @@
   block:
     - name: Checking status
       ansible.builtin.command:
-        "gs_om -t status"
+        "gs_om -t status --detail"
       register: gs_status
-      until: "gs_status.stdout_lines | regex_search('cluster_state.*Normal')"
+      until:
+        - "gs_status.stdout_lines | regex_search('cluster_state.*Normal')"
+        - "gs_status.stdout_lines | regex_search('Standby.*Normal')"
       retries: 30
       delay: 10
       changed_when: false
@@ -16,7 +18,6 @@
         msg: |
           {{ gs_status.stdout_lines }}
 
-  always:
     - name: Play aborted
       ansible.builtin.meta:
         end_play

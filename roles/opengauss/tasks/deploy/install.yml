@@ -30,30 +30,27 @@
       -X {{ og_upload_path }}/cluster_config.xml \
       --non-interactive
   changed_when: false
-
-# 某些情况下，无法直接从单节点扩容到 1 主 1 备 1 级联。
-# 怀疑是因为需要先有备机才能再有级联，回头仔细再看看官方文档。
-# 奇怪的是我之前有成功过，所以也可能我哪儿改错了代码。
-# 暂时先这样了，先扩容备机，再扩容级联机，耗时相应地增加了:(
+  become_user: root
+  when: "og_expansion or ep_nodes is truthy"
 
 # 从扩容列表里拆分出备机和级联机
-# - name: "Set 'standby_nodes' and 'cascade_nodes'"
-#   ansible.builtin.set_fact:
-#     standby_nodes: >-
-#       {%- for node in ep_nodes if node in groups['opengauss_standby'] -%}
-#         {{ node }}{{ (loop.nextitem is defined) | ternary(',', '') }}
-#       {%- endfor -%}
-#     cascade_nodes: >-
-#       {%- for node in ep_nodes if node in groups['opengauss_cascade'] -%}
-#         {{ node }}{{ (loop.nextitem is defined) | ternary(',', '') }}
-#       {%- endfor -%}
+- name: "Set 'standby_nodes' and 'cascade_nodes'"
+  ansible.builtin.set_fact:
+    standby_nodes: >-
+      {%- for node in ep_nodes if node in groups['opengauss_standby'] -%}
+        {{ node }}{{ (loop.nextitem is defined) | ternary(',', '') }}
+      {%- endfor -%}
+    cascade_nodes: >-
+      {%- for node in ep_nodes if node in groups['opengauss_cascade'] -%}
+        {{ node }}{{ (loop.nextitem is defined) | ternary(',', '') }}
+      {%- endfor -%}
 
 # 备机扩容
-- name: Start expansion
+- name: Start standby expansion
   become_user: root
   when:
     - "og_expansion"
-    # - "standby_nodes is truthy"
+    - "standby_nodes is truthy"
   block:
     - name: Expanding standby nodes
       ansible.builtin.shell: >-
@@ -63,37 +60,91 @@
             -G {{ og_group }} \
             -X {{ og_upload_path }}/cluster_config.xml \
             --time-out {{ (ep_nodes | count) * 600 }} \
-            -h {{ ep_nodes | join(',') }}
+            -h {{ standby_nodes }}
+      changed_when: false
+
+# 级联机扩容，前提是集群里有 Normal 状态的备机节点。
+- name: Start cascade expansion
+  become_user: root
+  when:
+    - "og_expansion"
+    - "cascade_nodes is truthy"
+  block:
+    - name: Import 'wait_for_started' tasks
+      ansible.builtin.import_tasks:
+        file: wait_for_started.yml
+
+    - name: Expanding cascade nodes
+      ansible.builtin.shell: >-
+        . /home/{{ og_user }}/.bashrc && \
+          {{ og_upload_path }}/script/gs_expansion \
+            -U {{ og_user }} \
+            -G {{ og_group }} \
+            -X {{ og_upload_path }}/cluster_config.xml \
+            --time-out {{ (ep_nodes | count) * 600 }} \
+            -h {{ cascade_nodes }}
       changed_when: false
 
     - name: Import 'wait_for_started' tasks
       ansible.builtin.import_tasks:
         file: wait_for_started.yml
 
-# # 级联机扩容，前提是有备机节点。
-# - name: Start cascade expansion
-#   become_user: root
-#   when:
-#     - "og_expansion"
-#     - "cascade_nodes is truthy"
-#     - "groups['opengauss_standby'] is truthy"
-#   block:
-#     - name: Expanding cascade nodes
-#       ansible.builtin.shell: >-
-#         . /home/{{ og_user }}/.bashrc && \
-#           {{ og_upload_path }}/script/gs_expansion \
-#             -U {{ og_user }} \
-#             -G {{ og_group }} \
-#             -X {{ og_upload_path }}/cluster_config.xml \
-#             --time-out {{ (ep_nodes | count) * 600 }} \
-#             -h {{ cascade_nodes }}
-#       changed_when: false
+# 集群增加 CM 工具
+- name: Deploy CM tool
+  when:
+    - "groups['opengauss_cm'] is not defined"
+    - "og_cm_enabled"
+  block:
+    - name: Switchover to fix 'Term of primary is invalid or not maximal' error
+      ansible.builtin.command:
+        gs_ctl switchover -D {{ og_data_path }}/dn
+      changed_when: false
+      when:
+        - "'Primary' not in node"
+        - "ansible_loop.index < 3"
+      loop: "{{ dn_nodes | reject('search', 'Primary') | sort(reverse=True) }}"
+      loop_control:
+        loop_var: node
+        pause: 15
+        extended: true
+      delegate_to: "{{ hostvars[node]['node_ip'] }}"
 
-#     - name: Import 'wait_for_started' tasks
-#       ansible.builtin.import_tasks:
-#         file: wait_for_started.yml
+    - name: Import 'wait_for_started' tasks
+      ansible.builtin.import_tasks:
+        file: wait_for_started.yml
+
+    - name: Deploy CM tool
+      ansible.builtin.expect:
+        command: "./cm_install -X {{ og_upload_path }}/cluster_config.xml --cmpkg {{ og_upload_path }}/{{ cm_pkg }}"
+        responses:
+          (?i)password: "{{ og_ca_pass }}"
+        chdir: "{{ og_home }}/install/app/tool/cm_tool"
+        timeout: "{{ (dn_nodes | count) * 300 }}"
+      changed_when: false
+      register: cm_install
+      until:
+        - "cm_install.stdout is defined"
+        - "'CM exists' in cm_install.stdout"
+      retries: 2
+      ignore_errors: true
+
+    - name: Refresh cluster config
+      ansible.builtin.command:
+        gs_om -t refreshconf
+      changed_when: false
 
 # 初次部署
+# # 预部署脚本
+# - name: "Run {{ og_upload_path + '/script/gs_preinstall' }}"
+#   ansible.builtin.command: >-
+#     {{ og_upload_path }}/script/gs_preinstall \
+#       -U {{ og_user }} \
+#       -G {{ og_group }} \
+#       -X {{ og_upload_path }}/cluster_config.xml \
+#       --non-interactive
+#   changed_when: false
+#   become_user: root
+
 - name: "Run {{ og_upload_path + '/script/gs_install' }}"
   ansible.builtin.command: >-
     gs_install \

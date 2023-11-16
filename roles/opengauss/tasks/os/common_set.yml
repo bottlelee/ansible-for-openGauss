@@ -56,7 +56,6 @@
       - nano
       - htop
       - "{{ python_name }}-pexpect"
-    # update_cache: true
     use: "{{ custom_pkg_mgr | default(ansible_pkg_mgr) }}"
   register: pkg_inst
   until: pkg_inst is succeeded
@@ -121,4 +120,3 @@
   loop_control:
     label: "{{ sysctl.key }} = {{ sysctl.value }}"
     loop_var: sysctl
-

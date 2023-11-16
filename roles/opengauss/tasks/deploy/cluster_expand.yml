@@ -1,10 +1,89 @@
-- name: Import pre tasks
+- name: Set expansion facts
+  ansible.builtin.set_fact:
+    cm_nodes: "{{ (groups['opengauss_cm'] is defined) | ternary(groups['opengauss_cm'], '') | sort }}"
+    dn_nodes: "{{ (groups['opengauss_dn'] is defined) | ternary(groups['opengauss_dn'], '') | sort }}"
+    ep_nodes: "{{ groups['opengauss_ep'] | sort }}"
+    og_cm_enabled: "{{ (groups['opengauss_cm'] is defined) | ternary(true, false) }}"
+    og_preinstall: true
+  run_once: true
+
+# 从扩容列表里拆分出备机和级联机
+- name: "Set 'standby_nodes' and 'cascade_nodes'"
+  ansible.builtin.set_fact:
+    standby_nodes: >-
+      {%- for node in ep_nodes if node in groups['opengauss_standby'] -%}
+        {{ node }}{{ (loop.nextitem is defined) | ternary(',', '') }}
+      {%- endfor -%}
+    cascade_nodes: >-
+      {%- for node in ep_nodes if node in groups['opengauss_cascade'] -%}
+        {{ node }}{{ (loop.nextitem is defined) | ternary(',', '') }}
+      {%- endfor -%}
+  run_once: true
+
+- name: Import OS config tasks
   ansible.builtin.include_tasks:
-    file: pre_tasks.yml
+    file: os/main.yml
   when: "inventory_hostname in ep_nodes"
 
-- name: Import deploy tasks
-  ansible.builtin.import_tasks:
-    file: deploy/main.yml
+- name: Start expansion tasks
+  run_once: true
   delegate_to: "{{ og_master }}"
+  block:
+    - name: Import pre tasks
+      ansible.builtin.import_tasks:
+        file: deploy/cluster_pre_tasks.yml
+
+    - name: Import config generate tasks
+      ansible.builtin.import_tasks:
+        file: deploy/cluster_config_generate.yml
+
+    # 备机扩容
+    - name: Tips
+      ansible.builtin.debug:
+        msg: |
+          Next task might take a while.
+          Please wait for it complete.
+
+    - name: Expanding standby nodes
+      when:
+        - "standby_nodes is truthy"
+      ansible.builtin.shell: >-
+        . /home/{{ og_user }}/.bashrc && \
+          {{ og_upload_path }}/script/gs_expansion \
+            -U {{ og_user }} \
+            -G {{ og_group }} \
+            -X {{ og_upload_path }}/cluster_config.xml \
+            --time-out {{ (ep_nodes | count) * 600 }} \
+            -h {{ standby_nodes }}
+      changed_when: false
+
+    - name: Import 'wait_for_started' tasks
+      ansible.builtin.import_tasks:
+        file: wait_for_started.yml
+
+    # 级联机扩容，前提是集群里有 Normal 状态的备机节点。
+    - name: Tips
+      ansible.builtin.debug:
+        msg: |
+          Next task might take a while.
+          Please wait for it complete.
+
+    - name: Expanding cascade nodes
+      when:
+        - "gs_status.stdout_lines | regex_search('Standby.*Normal')"
+        - "cascade_nodes is truthy"
+      ansible.builtin.shell: >-
+        . /home/{{ og_user }}/.bashrc && \
+          {{ og_upload_path }}/script/gs_expansion \
+            -U {{ og_user }} \
+            -G {{ og_group }} \
+            -X {{ og_upload_path }}/cluster_config.xml \
+            --time-out {{ (ep_nodes | count) * 600 }} \
+            -h {{ cascade_nodes }}
+      changed_when: false
+
+# 刷新分组，判断是否触发 CM 部署。
+- name: Import cluster check tasks
+  ansible.builtin.import_tasks:
+    file: deploy/cluster_check.yml
   run_once: true

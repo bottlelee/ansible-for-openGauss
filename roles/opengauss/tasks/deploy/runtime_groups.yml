@@ -31,7 +31,7 @@
       when: "node not in gs_detail.stdout"
 
     # 按编号顺序保存现有 CM 服务器列表。
-    - name: Create current cmserver list
+    - name: Save current cmserver list
       ansible.builtin.add_host:
         hostname: "{{ node_info[3] }}_{{ node_info[1] }}"
         groups:
@@ -51,7 +51,7 @@
 
     # 按编号顺序保存现有 DN 服务器列表。
     # 这里需要判断输出了多少列，因为有 CM 的集群里，会隐藏数据库端口 Port 的那一列。
-    - name: Create current data nodes list
+    - name: Save current data nodes list
       ansible.builtin.add_host:
         hostname: >-
           {%- if og_cluster_config.db_port in line -%}
@@ -88,4 +88,3 @@
 - name: Current data nodes
   ansible.builtin.debug:
     msg: "{{ groups['opengauss_dn'] }}"
-  when: "groups['opengauss_dn'] is defined"
