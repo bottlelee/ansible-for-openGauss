@@ -23,14 +23,14 @@
       become_user: root
 
     - name: Import cluster manager deploy tasks
-      become_user: "{{ og_user }}"
-      delegate_to: "{{ og_master }}"
-      run_once: true
       ansible.builtin.import_tasks:
         file: deploy/cluster_manager.yml
       when:
         - "groups['opengauss_cm'] is not defined"
-        - "groups['opengauss_dn'] | count > 2"
+        - "(og_all_nodes | count) > 2"
+      become_user: "{{ og_user }}"
+      delegate_to: "{{ og_master }}"
+      run_once: true
 
   always:
     - name: Import post tasks

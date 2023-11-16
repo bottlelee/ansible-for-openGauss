@@ -7,7 +7,7 @@
     cm_nodes: "{{ (og_all_nodes | count > 2) | ternary(og_all_nodes, '') | sort }}"
     dn_nodes: "{{ groups['opengauss_dn'] | sort }}"
     ep_nodes: "{{ (groups['opengauss_ep'] is defined) | ternary(groups['opengauss_ep'], '') | sort }}"
-    og_cm_enabled: "{{ og_all_nodes | count > 2 }}"
+    og_cm_enabled: "{{ (og_all_nodes | count) > 2 }}"
     og_preinstall: true
 
 - name: Switch to root user
@@ -16,8 +16,6 @@
     - name: Import upload tasks
       ansible.builtin.import_tasks:
         file: deploy/upload.yml
-      # delegate_to: "{{ og_master }}"
-      # run_once: true
 
     - name: Import pre tasks
       ansible.builtin.import_tasks:

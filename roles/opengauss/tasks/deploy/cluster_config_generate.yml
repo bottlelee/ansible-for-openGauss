@@ -12,7 +12,7 @@
   delegate_to: localhost
   become: false
 
-- name: "Upload cluster_config.xml to {{ og_upload_path + '/cluster_config.xml' }}"
+- name: "Update {{ og_master + ':' + og_upload_path + '/cluster_config.xml' }}"
   ansible.builtin.copy:
     src: "{{ inventory_dir }}/cluster_config.xml"
     dest: "{{ og_upload_path }}/"

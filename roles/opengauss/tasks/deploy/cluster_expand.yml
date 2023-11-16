@@ -81,9 +81,3 @@
             --time-out {{ (ep_nodes | count) * 600 }} \
             -h {{ cascade_nodes }}
       changed_when: false
-
-# 刷新分组，判断是否触发 CM 部署。
-- name: Import cluster check tasks
-  ansible.builtin.import_tasks:
-    file: deploy/cluster_check.yml
-  run_once: true

@@ -1,3 +1,7 @@
+- name: Import cluster check tasks
+  ansible.builtin.import_tasks:
+    file: deploy/cluster_check.yml
+
 - name: Set CM facts
   ansible.builtin.set_fact:
     cm_nodes: "{{ (groups['opengauss_dn'] is defined) | ternary(groups['opengauss_dn'], '') | sort }}"
@@ -76,19 +80,30 @@
     - "groups['opengauss_cm'] is not defined"
     - "og_cm_enabled"
   block:
-    - name: Switchover to fix 'Term of primary is invalid or not maximal' error
+    - name: Switchover on a standby node
       ansible.builtin.command:
         gs_ctl switchover -D {{ og_data_path }}/dn
       changed_when: false
-      when:
-        - "'Primary' not in node"
-        - "ansible_loop.index < 3"
-      loop: "{{ dn_nodes | reject('search', 'Primary') | sort(reverse=True) }}"
+      loop: "{{ dn_nodes | select('search', 'Standby') }}"
       loop_control:
         loop_var: node
-        pause: 15
         extended: true
+      when: "ansible_loop.index == 1"
       delegate_to: "{{ hostvars[node]['node_ip'] }}"
+
+    - name: Switchover back to primary node                                       
+      ansible.builtin.command:
+        gs_ctl switchover -D {{ og_data_path }}/dn
+      changed_when: false
+      loop: "{{ dn_nodes | select('search', 'Primary') }}"
+      loop_control:
+        loop_var: node
+      delegate_to: "{{ hostvars[node]['node_ip'] }}"
+
+    - name: Start any stopped nodes
+      ansible.builtin.command:
+        gs_om -t start
+      changed_when: false
 
     - name: Import 'wait_for_started' tasks
       ansible.builtin.import_tasks:
