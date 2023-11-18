@@ -28,8 +28,11 @@
 - name: Tips
   ansible.builtin.debug:
     msg: |
-      Next task might take a while.
-      Please wait for it complete.
+      Starting deploy openGauss on
+
+      {{ og_all_nodes }}
+
+      Please wait...
 
 - name: "Run {{ og_upload_path + '/script/gs_install' }}"
   ansible.builtin.command: >-

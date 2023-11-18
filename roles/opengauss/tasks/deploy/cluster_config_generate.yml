@@ -1,4 +1,4 @@
-- name: "Create local file {{ inventory_dir + 'cluster_config.xml' }}"
+- name: "Create local file {{ inventory_dir + '/cluster_config.xml' }}"
   ansible.builtin.template:
     src: "{{ item }}"
     dest: "{{ inventory_dir }}/cluster_config.xml"
@@ -24,7 +24,7 @@
 - name: Tips
   ansible.builtin.debug:
     msg: |
-      Pre-install is running.
+      Starting pre-install.
       Please wait...
   when: "og_preinstall"
 
