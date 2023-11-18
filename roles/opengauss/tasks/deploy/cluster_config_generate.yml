@@ -24,8 +24,8 @@
 - name: Tips
   ansible.builtin.debug:
     msg: |
-      Next task might take a while.
-      Please wait for it complete.
+      Pre-install is running.
+      Please wait...
   when: "og_preinstall"
 
 # 预部署脚本

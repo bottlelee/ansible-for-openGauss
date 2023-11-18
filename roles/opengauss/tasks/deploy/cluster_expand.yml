@@ -41,8 +41,11 @@
     - name: Tips
       ansible.builtin.debug:
         msg: |
-          Next task might take a while.
-          Please wait for it complete.
+          Adding standby nodes
+
+          {{ standby_nodes }}
+
+          Please wait...
 
     - name: Expanding standby nodes
       when:
@@ -65,8 +68,8 @@
     - name: Tips
       ansible.builtin.debug:
         msg: |
-          Next task might take a while.
-          Please wait for it complete.
+          Add cascade nodes into cluster.
+          Please wait...
 
     - name: Expanding cascade nodes
       when:
@@ -81,3 +84,12 @@
             --time-out {{ (ep_nodes | count) * 600 }} \
             -h {{ cascade_nodes }}
       changed_when: false
+
+  always:
+    - name: Import wait for started tasks
+      ansible.builtin.import_tasks:
+        file: wait_for_started.yml
+
+- name: Import cluster check tasks
+  ansible.builtin.import_tasks:
+    file: deploy/cluster_check.yml

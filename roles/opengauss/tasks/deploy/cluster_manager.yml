@@ -1,7 +1,3 @@
-- name: Import cluster check tasks
-  ansible.builtin.import_tasks:
-    file: deploy/cluster_check.yml
-
 - name: Set CM facts
   ansible.builtin.set_fact:
     cm_nodes: "{{ (groups['opengauss_dn'] is defined) | ternary(groups['opengauss_dn'], '') | sort }}"
@@ -9,6 +5,7 @@
     ep_nodes: ""
     og_cm_enabled: true
     og_expansion: false
+    og_preinstall: false
 
 - name: Root tasks
   become_user: root
@@ -25,13 +22,6 @@
         loop_var: file
       when:
         - "'cm.tar.gz' in file"
-
-    - name: "Change file permission of {{ cm_pkg }}"
-      ansible.builtin.file:
-        path: "{{ og_upload_path }}/{{ cm_pkg }}"
-        owner: "{{ og_user }}"
-        group: "{{ og_group }}"
-        mode: "0640"
 
     - name: Create some paths
       ansible.builtin.file:
@@ -62,6 +52,13 @@
       ansible.builtin.import_tasks:
         file: deploy/cluster_config_generate.yml
 
+    - name: "Change file permission of {{ cm_pkg }}"
+      ansible.builtin.file:
+        path: "{{ og_upload_path }}/{{ cm_pkg }}"
+        owner: "{{ og_user }}"
+        group: "{{ og_group }}"
+        mode: "0640"
+
 # 这里需要建一个假的定时任务，包含 'om_monitor'。后续 cm_install 时会检查替换，否则失败。
 - name: Fake an om_monitor cron job before install
   ansible.builtin.cron:
@@ -91,7 +88,7 @@
       when: "ansible_loop.index == 1"
       delegate_to: "{{ hostvars[node]['node_ip'] }}"
 
-    - name: Switchover back to primary node                                       
+    - name: Switchover back to primary node
       ansible.builtin.command:
         gs_ctl switchover -D {{ og_data_path }}/dn
       changed_when: false
@@ -112,8 +109,8 @@
     - name: Tips
       ansible.builtin.debug:
         msg: |
-          Next task might take a while.
-          Please wait for it complete.
+          Adding CM tool into cluster.
+          Please wait...
 
     - name: Deploy CM tool
       ansible.builtin.expect:
@@ -127,8 +124,9 @@
       until:
         - "cm_install.stdout is defined"
         - "'CM exists' in cm_install.stdout"
-      retries: 2
-      ignore_errors: true
+      retries: 3
+      #ignore_errors: true
+      failed_when: "cm_install.rc == 999"
 
     - name: Refresh cluster config
       ansible.builtin.command:

@@ -27,7 +27,7 @@
         file: deploy/cluster_manager.yml
       when:
         - "groups['opengauss_cm'] is not defined"
-        - "(og_all_nodes | count) > 2"
+        - "(groups['opengauss_dn'] | count) > 2"
       become_user: "{{ og_user }}"
       delegate_to: "{{ og_master }}"
       run_once: true
