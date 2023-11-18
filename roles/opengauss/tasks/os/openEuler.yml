@@ -8,6 +8,8 @@
   until: pkg_inst is succeeded
   retries: 3
 
+# openGauss 5.0.0 依赖 readline 7
+# openEuler 20.03 只有 readline 8
 - name: Create soft link
   ansible.builtin.file:
     src: /lib64/libreadline.so.8

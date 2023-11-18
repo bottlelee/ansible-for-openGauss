@@ -12,6 +12,9 @@ Vagrant.configure("2") do |config|
   # 这个设置针对无法被 vagrant 识别的国产系统，例如 openEuler。强制指定按哪个通用系统来配置。
   config.vm.guest = "centos"
 
+  # How many vm do you want?
+  N = 5
+
   config.vm.provider "virtualbox" do |vb|
     vb.memory = 1024 * 16
     vb.cpus = 8
@@ -23,15 +26,16 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell" do |s|
     s.inline = <<-SHELL
     sed -i "s|PasswordAuthentication no|PasswordAuthentication yes|g" /etc/ssh/sshd_config
+    dnf makecache
+    dnf upgrade -y
+    dnf install -y bzip2 expect net-tools ntp tar gzip readline-devel \
+      patch ncurses-devel libaio-devel glibc-devel flex bison nano htop libnsl
     /bin/systemctl restart sshd.service
     SHELL
   end
 
   #Disabling the default /vagrant share
   config.vm.synced_folder ".", "/vagrant", disabled: true
-
-  # How many vm do you want?
-  N = 3
 
   (1..N).each do |i|
     config.vm.define "opengauss#{i}" do |node|

@@ -22,12 +22,12 @@
       "/>
       <PARAM name="dataNode1_syncNum" value="{{ og_cluster_config.sync_num }}"/>
 
-    {%- if og_cm_enabled -%}
+{% if og_cm_enabled %}
       <!-- CLUSTER MANAGER -->
       <PARAM name="cmsNum" value="1"/>
       <PARAM name="cmServerPortBase" value="{{ og_cluster_config.cm_port }}"/>
       <PARAM name="cmServerlevel" value="1"/>
-      <PARAM name="cmDir" value="{{ og_data_path }}/cmserver"/>
+      <PARAM name="cmDir" value="{{ og_data_path }}/cm"/>
       <PARAM name="cmServerRelation" value="og{{ og_master | ipaddr('int') }}
 {% for node in cm_nodes if hostvars[node]['node_ip'] != og_master %}
         ,og{{ hostvars[node]['node_ip'] | default(node) | ipaddr('int') }}
@@ -52,5 +52,5 @@
         ,{{ node }}
 {% endfor %}
       "/>
-    {%- endif -%}
+{% endif %}
     </DEVICE>

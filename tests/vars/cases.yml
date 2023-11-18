@@ -1,0 +1,22 @@
+# primary 不需要设置，必须只有 1 个。
+cases:
+  - name: "单节点"
+    sn: "1p"
+    standby: 0
+    cascade: 0
+  - name: "1 主 1 备"
+    sn: "1p1s"
+    standby: 1
+    cascade: 0
+  - name: "1 主 1 备 1 级联"
+    sn: "1p1s1c"
+    standby: 1
+    cascade: 1
+  - name: "1 主 2 备 1 级联"
+    sn: "1p2s1c"
+    standby: 2
+    cascade: 1
+  - name: "1 主 2 备 2 级联"
+    sn: "1p2s2c"
+    standby: 2
+    cascade: 2

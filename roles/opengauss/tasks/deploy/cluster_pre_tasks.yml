@@ -1,0 +1,36 @@
+- name: Update /etc/hosts
+  ansible.builtin.blockinfile:
+    path: /etc/hosts
+    marker: "# {mark} OPENGAUSS NODES"
+    block: |
+      {% for node in og_all_nodes %}
+      {{ node }}  og{{ node | ipaddr('int') }}
+      {% endfor %}
+  delegate_to: "{{ node }}"
+  loop: "{{ og_all_nodes }}"
+  loop_control:
+    loop_var: node
+
+- name: Scan hosts key
+  ansible.builtin.command: >-
+    ssh-keyscan -p {{ host_port }} {{ node }},og{{ node | ipaddr('int') }}
+  changed_when: false
+  loop: "{{ og_all_nodes }}"
+  loop_control:
+    loop_var: node
+  vars:
+    host_port: "{{ ansible_ssh_port | default('22') }}"
+  register: known_host_keys
+
+- name: Config known hosts
+  ansible.builtin.include_tasks:
+    file: deploy/known_hosts.yml
+  vars:
+    host_keys: "{{ known_host_keys.results | map(attribute='stdout_lines') | flatten }}"
+
+- name: Config authorized keys
+  ansible.builtin.include_tasks:
+    file: deploy/add_auth.yml
+  loop: "{{ og_all_nodes }}"
+  loop_control:
+    loop_var: node

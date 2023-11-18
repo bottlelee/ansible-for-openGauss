@@ -15,6 +15,6 @@ docker exec -it ansible-for-opengauss byobu
 
 # 声明
 
-我个人比较喜爱使用 fish 作为默认的 shell，以及使用 byobu 作为单窗口多终端的工作环境。如果您不喜欢，可以自行修改 Dockerfile 的内容。
+我个人比较喜爱使用 [fish](https://fishshell.com/) 作为默认的 shell，以及使用 [byobu](https://www.byobu.org/documentation) 作为单窗口多终端的工作环境。如果您不喜欢，可以自行修改 Dockerfile 的内容。
 
 接下来你可以阅读[详细配置](02-pre-set.md)，仅需按分组编排服务器节点的角色，即可开始全自动化部署。

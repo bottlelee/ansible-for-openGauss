@@ -1,4 +1,4 @@
-- name: "Create cluster_config.xml in local path '{{ inventory_dir }}'"
+- name: "Create local file {{ inventory_dir + 'cluster_config.xml' }}"
   ansible.builtin.template:
     src: "{{ item }}"
     dest: "{{ inventory_dir }}/cluster_config.xml"
@@ -12,7 +12,7 @@
   delegate_to: localhost
   become: false
 
-- name: "Upload cluster_config.xml to {{ og_upload_path }}"
+- name: "Upload cluster_config.xml to {{ og_upload_path + '/cluster_config.xml' }}"
   ansible.builtin.copy:
     src: "{{ inventory_dir }}/cluster_config.xml"
     dest: "{{ og_upload_path }}/"
@@ -21,49 +21,138 @@
     mode: "0644"
     backup: true
 
-- name: Start expansion
+# 预部署脚本
+- name: "Run {{ og_upload_path + '/script/gs_preinstall' }}"
+  ansible.builtin.command: >-
+    {{ og_upload_path }}/script/gs_preinstall \
+      -U {{ og_user }} \
+      -G {{ og_group }} \
+      -X {{ og_upload_path }}/cluster_config.xml \
+      --non-interactive
+  changed_when: false
   become_user: root
-  when: "og_expansion"
-  block:
-    - name: Starting pre install
-      ansible.builtin.command: >-
-        {{ og_upload_path }}/script/gs_preinstall \
-          -U {{ og_user }} \
-          -G {{ og_group }} \
-          -X {{ og_upload_path }}/cluster_config.xml \
-          --non-interactive
-      changed_when: false
+  when: "og_expansion or ep_nodes is truthy"
 
-    - name: Cluster expanding
+# 从扩容列表里拆分出备机和级联机
+- name: "Set 'standby_nodes' and 'cascade_nodes'"
+  ansible.builtin.set_fact:
+    standby_nodes: >-
+      {%- for node in ep_nodes if node in groups['opengauss_standby'] -%}
+        {{ node }}{{ (loop.nextitem is defined) | ternary(',', '') }}
+      {%- endfor -%}
+    cascade_nodes: >-
+      {%- for node in ep_nodes if node in groups['opengauss_cascade'] -%}
+        {{ node }}{{ (loop.nextitem is defined) | ternary(',', '') }}
+      {%- endfor -%}
+
+# 备机扩容
+- name: Start standby expansion
+  become_user: root
+  when:
+    - "og_expansion"
+    - "standby_nodes is truthy"
+  block:
+    - name: Expanding standby nodes
       ansible.builtin.shell: >-
         . /home/{{ og_user }}/.bashrc && \
           {{ og_upload_path }}/script/gs_expansion \
             -U {{ og_user }} \
             -G {{ og_group }} \
             -X {{ og_upload_path }}/cluster_config.xml \
-            -h {{ groups['opengauss_ep'] | join(',') }} \
-            --time-out {{ (og_all_nodes | count) * 600 }}
+            --time-out {{ (ep_nodes | count) * 600 }} \
+            -h {{ standby_nodes }}
       changed_when: false
 
-- name: Starting deploy
-  when: "not og_expansion"
+# 级联机扩容，前提是集群里有 Normal 状态的备机节点。
+- name: Start cascade expansion
+  become_user: root
+  when:
+    - "og_expansion"
+    - "cascade_nodes is truthy"
   block:
-    - name: Starting pre install
-      ansible.builtin.command: >-
-        {{ og_upload_path }}/script/gs_preinstall \
-          -U {{ og_user }} \
-          -G {{ og_group }} \
-          -X {{ og_upload_path }}/cluster_config.xml \
-          --non-interactive
+    - name: Import 'wait_for_started' tasks
+      ansible.builtin.import_tasks:
+        file: wait_for_started.yml
+
+    - name: Expanding cascade nodes
+      ansible.builtin.shell: >-
+        . /home/{{ og_user }}/.bashrc && \
+          {{ og_upload_path }}/script/gs_expansion \
+            -U {{ og_user }} \
+            -G {{ og_group }} \
+            -X {{ og_upload_path }}/cluster_config.xml \
+            --time-out {{ (ep_nodes | count) * 600 }} \
+            -h {{ cascade_nodes }}
       changed_when: false
 
-    - name: Deploy openGauss
-      ansible.builtin.command: >-
-        gs_install \
-          -X {{ og_upload_path }}/cluster_config.xml \
-          --gsinit-parameter="--pwpasswd={{ og_db_pass }}" \
-          --gsinit-parameter="--locale={{ og_locale }}" \
-          --time-out {{ (og_all_nodes | count) * 600 }}
+    - name: Import 'wait_for_started' tasks
+      ansible.builtin.import_tasks:
+        file: wait_for_started.yml
+
+# 集群增加 CM 工具
+- name: Deploy CM tool
+  when:
+    - "groups['opengauss_cm'] is not defined"
+    - "og_cm_enabled"
+  block:
+    - name: Switchover to fix 'Term of primary is invalid or not maximal' error
+      ansible.builtin.command:
+        gs_ctl switchover -D {{ og_data_path }}/dn
       changed_when: false
-      become_user: "{{ og_user }}"
-      become_flags: "-i"
+      when:
+        - "'Primary' not in node"
+        - "ansible_loop.index < 3"
+      loop: "{{ dn_nodes | reject('search', 'Primary') | sort(reverse=True) }}"
+      loop_control:
+        loop_var: node
+        pause: 15
+        extended: true
+      delegate_to: "{{ hostvars[node]['node_ip'] }}"
+
+    - name: Import 'wait_for_started' tasks
+      ansible.builtin.import_tasks:
+        file: wait_for_started.yml
+
+    - name: Deploy CM tool
+      ansible.builtin.expect:
+        command: "./cm_install -X {{ og_upload_path }}/cluster_config.xml --cmpkg {{ og_upload_path }}/{{ cm_pkg }}"
+        responses:
+          (?i)password: "{{ og_ca_pass }}"
+        chdir: "{{ og_home }}/install/app/tool/cm_tool"
+        timeout: "{{ (dn_nodes | count) * 300 }}"
+      changed_when: false
+      register: cm_install
+      until:
+        - "cm_install.stdout is defined"
+        - "'CM exists' in cm_install.stdout"
+      retries: 2
+      ignore_errors: true
+
+    - name: Refresh cluster config
+      ansible.builtin.command:
+        gs_om -t refreshconf
+      changed_when: false
+
+# 初次部署
+# # 预部署脚本
+# - name: "Run {{ og_upload_path + '/script/gs_preinstall' }}"
+#   ansible.builtin.command: >-
+#     {{ og_upload_path }}/script/gs_preinstall \
+#       -U {{ og_user }} \
+#       -G {{ og_group }} \
+#       -X {{ og_upload_path }}/cluster_config.xml \
+#       --non-interactive
+#   changed_when: false
+#   become_user: root
+
+- name: "Run {{ og_upload_path + '/script/gs_install' }}"
+  ansible.builtin.command: >-
+    gs_install \
+      -X {{ og_upload_path }}/cluster_config.xml \
+      --gsinit-parameter="--pwpasswd={{ og_db_pass }}" \
+      --gsinit-parameter="--locale={{ og_locale }}" \
+      --time-out {{ (og_all_nodes | count) * 600 }}
+  changed_when: false
+  become_user: "{{ og_user }}"
+  become_flags: "-i"
+  when: "not og_expansion"

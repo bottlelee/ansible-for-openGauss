@@ -1,35 +1,95 @@
-- name: Import pre tasks
-  ansible.builtin.include_tasks:
-    file: pre_tasks.yml
-  when: "inventory_hostname in ep_nodes"
-
-- name: Import deploy tasks
-  ansible.builtin.import_tasks:
-    file: deploy/main.yml
-  delegate_to: "{{ og_master }}"
+- name: Set expansion facts
+  ansible.builtin.set_fact:
+    cm_nodes: "{{ (groups['opengauss_cm'] is defined) | ternary(groups['opengauss_cm'], '') | sort }}"
+    dn_nodes: "{{ (groups['opengauss_dn'] is defined) | ternary(groups['opengauss_dn'], '') | sort }}"
+    ep_nodes: "{{ groups['opengauss_ep'] | sort }}"
+    og_cm_enabled: "{{ (groups['opengauss_cm'] is defined) | ternary(true, false) }}"
+    og_preinstall: true
   run_once: true
 
-# # 3 节点或以上，且未部署 CM 的情况。
-# - name: Tasks for CM cluster
-#   when:
-#     - "(cm_nodes | count) < 2"
-#     - "og_cm_enabled"
-#   run_once: true
-#   block:
-#     - name: Import cluster manager tasks
-#       ansible.builtin.import_tasks:
-#         file: cluster_manager.yml
-#       delegate_to: "{{ og_master }}"
-#       become_user: "{{ og_user }}"
+# 从扩容列表里拆分出备机和级联机
+- name: "Set 'standby_nodes' and 'cascade_nodes'"
+  ansible.builtin.set_fact:
+    standby_nodes: >-
+      {%- for node in ep_nodes if node in groups['opengauss_standby'] -%}
+        {{ node }}{{ (loop.nextitem is defined) | ternary(',', '') }}
+      {%- endfor -%}
+    cascade_nodes: >-
+      {%- for node in ep_nodes if node in groups['opengauss_cascade'] -%}
+        {{ node }}{{ (loop.nextitem is defined) | ternary(',', '') }}
+      {%- endfor -%}
+  run_once: true
 
-#     - name: Refresh cluster status
-#       ansible.builtin.command:
-#         gs_om -t status --detail
-#       changed_when: false
-#       register: gs_detail1
-#       become_user: "{{ og_user }}"
-#       delegate_to: "{{ og_master }}"
+- name: Import OS config tasks
+  ansible.builtin.include_tasks:
+    file: os/main.yml
+  when: "inventory_hostname in ep_nodes"
 
-#     - name: Import runtime groups tasks
-#       ansible.builtin.import_tasks:
-#         file: deploy/runtime_groups.yml
+- name: Start expansion tasks
+  run_once: true
+  delegate_to: "{{ og_master }}"
+  block:
+    - name: Import pre tasks
+      ansible.builtin.import_tasks:
+        file: deploy/cluster_pre_tasks.yml
+
+    - name: Import config generate tasks
+      ansible.builtin.import_tasks:
+        file: deploy/cluster_config_generate.yml
+
+    # 备机扩容
+    - name: Tips
+      ansible.builtin.debug:
+        msg: |
+          Adding standby nodes
+
+          {{ standby_nodes }}
+
+          Please wait...
+
+    - name: Expanding standby nodes
+      when:
+        - "standby_nodes is truthy"
+      ansible.builtin.shell: >-
+        . /home/{{ og_user }}/.bashrc && \
+          {{ og_upload_path }}/script/gs_expansion \
+            -U {{ og_user }} \
+            -G {{ og_group }} \
+            -X {{ og_upload_path }}/cluster_config.xml \
+            --time-out {{ (ep_nodes | count) * 600 }} \
+            -h {{ standby_nodes }}
+      changed_when: false
+
+    - name: Import 'wait_for_started' tasks
+      ansible.builtin.import_tasks:
+        file: wait_for_started.yml
+
+    # 级联机扩容，前提是集群里有 Normal 状态的备机节点。
+    - name: Tips
+      ansible.builtin.debug:
+        msg: |
+          Add cascade nodes into cluster.
+          Please wait...
+
+    - name: Expanding cascade nodes
+      when:
+        - "gs_status.stdout_lines | regex_search('Standby.*Normal')"
+        - "cascade_nodes is truthy"
+      ansible.builtin.shell: >-
+        . /home/{{ og_user }}/.bashrc && \
+          {{ og_upload_path }}/script/gs_expansion \
+            -U {{ og_user }} \
+            -G {{ og_group }} \
+            -X {{ og_upload_path }}/cluster_config.xml \
+            --time-out {{ (ep_nodes | count) * 600 }} \
+            -h {{ cascade_nodes }}
+      changed_when: false
+
+  always:
+    - name: Import wait for started tasks
+      ansible.builtin.import_tasks:
+        file: wait_for_started.yml
+
+- name: Import cluster check tasks
+  ansible.builtin.import_tasks:
+    file: deploy/cluster_check.yml
