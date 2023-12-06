@@ -19,11 +19,28 @@
         file: os/main.yml
       become_user: root
 
+    - name: Import runtime tasks
+      ansible.builtin.import_tasks:
+        file: deploy/runtime_groups.yml
+
     - name: Import cluster deploy tasks
       ansible.builtin.import_tasks:
         file: deploy/cluster_deploy.yml
       delegate_to: "{{ og_master }}"
       become_user: "{{ og_user }}"
+      run_once: true
+
+    - name: "Query cluster detail"
+      ansible.builtin.command: "gs_om -t status --detail"
+      changed_when: false
+      register: gs_detail
+      become_user: "{{ og_user }}"
+      delegate_to: "{{ og_master }}"
+      run_once: true
+
+    - name: Import tasks to create runtime groups
+      ansible.builtin.import_tasks:
+        file: deploy/runtime_groups.yml
       run_once: true
 
 - name: Mission aborted

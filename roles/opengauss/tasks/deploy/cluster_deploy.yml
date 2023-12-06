@@ -1,7 +1,3 @@
-- name: Import runtime tasks
-  ansible.builtin.import_tasks:
-    file: deploy/runtime_groups.yml
-
 - name: Set first time deploy facts
   ansible.builtin.set_fact:
     cm_nodes: "{{ (og_all_nodes | count > 2) | ternary(og_all_nodes, '') | sort }}"

@@ -6,3 +6,4 @@
       - bison
       - patch
       - readline-common
+      - python3-pexpect

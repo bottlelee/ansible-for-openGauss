@@ -125,8 +125,9 @@
         - "cm_install.stdout is defined"
         - "'CM exists' in cm_install.stdout"
       retries: 3
-      #ignore_errors: true
-      failed_when: "cm_install.rc == 999"
+      failed_when: 
+        - "cm_install.rc is defined"
+        - "cm_install.rc == 999"
 
     - name: Refresh cluster config
       ansible.builtin.command:

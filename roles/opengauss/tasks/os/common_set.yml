@@ -55,7 +55,6 @@
       - bison
       - nano
       - htop
-      - "{{ python_name }}-pexpect"
     use: "{{ custom_pkg_mgr | default(ansible_pkg_mgr) }}"
   register: pkg_inst
   until: pkg_inst is succeeded
