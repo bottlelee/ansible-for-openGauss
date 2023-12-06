@@ -18,8 +18,10 @@
     F2：新建虚拟终端窗口
     F3：向左切换窗口
     F4：向右切换窗口
-    F6：将 byobu 置于后台。后续可以再次执行 `docker exec -it ansible-for-opengauss byobu` 进入。
+    F6：将 byobu 置于后台。这也是你退出 Ansible 容器的方法，无需关闭已开启的终端。
     ```
+ 
+   后续可以再次执行 `docker exec -it ansible-for-opengauss byobu` 进入。
 
 1. 执行部署
 
@@ -28,6 +30,12 @@
     ```
 
     这里的 `pansible` 是我预置的命令别名，对应的是 `ansible-playbook`。
+
+    同时，你可以登入到主节点，切换到 root 去查看部署过程中的日志，了解进度。
+
+    ```
+    tail -n100 -f /var/log/omm/**/*.log
+    ```
 
 1. 部署过程中自动生成的公私钥，以及账号密码，存放在 `/workdir/inventories/opengauss/credentials`
 
@@ -55,16 +63,16 @@
 对应的 hosts.ini 分组编排内容
 
 ```
-[opengauss_master]
+[opengauss_primary]
 192.168.56.11
 
-[opengauss_follower]
+[opengauss_standby]
 
 [opengauss_cascade]
 
 [opengauss:children]
-opengauss_master
-opengauss_follower
+opengauss_primary
+opengauss_standby
 opengauss_cascade
 ```
 
@@ -75,17 +83,17 @@ opengauss_cascade
 对应的 hosts.ini 分组编排内容
 
 ```
-[opengauss_master]
+[opengauss_primary]
 192.168.56.12
 
-[opengauss_follower]
+[opengauss_standby]
 192.168.56.13
 
 [opengauss_cascade]
 
 [opengauss:children]
-opengauss_master
-opengauss_follower
+opengauss_primary
+opengauss_standby
 opengauss_cascade
 ```
 
@@ -96,18 +104,18 @@ opengauss_cascade
 对应的 hosts.ini 分组编排内容
 
 ```
-[opengauss_master]
+[opengauss_primary]
 192.168.56.14
 
-[opengauss_follower]
+[opengauss_standby]
 192.168.56.15
 
 [opengauss_cascade]
 192.168.56.16
 
 [opengauss:children]
-opengauss_master
-opengauss_follower
+opengauss_primary
+opengauss_standby
 opengauss_cascade
 ```
 
@@ -118,18 +126,18 @@ opengauss_cascade
 对应的 hosts.ini 分组编排内容
 
 ```
-[opengauss_master]
+[opengauss_primary]
 192.168.56.17
 
-[opengauss_follower]
+[opengauss_standby]
 192.168.56.18
 192.168.56.19
 
 [opengauss_cascade]
 
 [opengauss:children]
-opengauss_master
-opengauss_follower
+opengauss_primary
+opengauss_standby
 opengauss_cascade
 ```
 

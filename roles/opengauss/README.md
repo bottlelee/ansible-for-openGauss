@@ -48,18 +48,18 @@
 master 组仅可以配置 1 台机器。follower 可以多台。cascade 可选可为空。
 
 ```
-[opengauss_master]
+[opengauss_primary]
 192.168.56.11
 
-[opengauss_follower]
+[opengauss_standby]
 192.168.56.12
 
 [opengauss_cascade]
 192.168.56.13
 
 [opengauss:children]
-opengauss_master
-opengauss_follower
+opengauss_primary
+opengauss_standby
 opengauss_cascade
 ```
 

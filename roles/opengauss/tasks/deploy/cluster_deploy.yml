@@ -1,0 +1,46 @@
+- name: Import runtime tasks
+  ansible.builtin.import_tasks:
+    file: deploy/runtime_groups.yml
+
+- name: Set first time deploy facts
+  ansible.builtin.set_fact:
+    cm_nodes: "{{ (og_all_nodes | count > 2) | ternary(og_all_nodes, '') | sort }}"
+    dn_nodes: "{{ groups['opengauss_dn'] | sort }}"
+    ep_nodes: "{{ (groups['opengauss_ep'] is defined) | ternary(groups['opengauss_ep'], '') | sort }}"
+    og_cm_enabled: "{{ (og_all_nodes | count) > 2 }}"
+    og_preinstall: true
+
+- name: Switch to root user
+  become_user: root
+  block:
+    - name: Import upload tasks
+      ansible.builtin.import_tasks:
+        file: deploy/upload.yml
+
+    - name: Import pre tasks
+      ansible.builtin.import_tasks:
+        file: deploy/cluster_pre_tasks.yml
+
+    - name: Import config generate tasks
+      ansible.builtin.import_tasks:
+        file: deploy/cluster_config_generate.yml
+
+- name: Tips
+  ansible.builtin.debug:
+    msg: |
+      Starting deploy openGauss on
+
+      {{ og_all_nodes }}
+
+      Please wait...
+
+- name: "Run {{ og_upload_path + '/script/gs_install' }}"
+  ansible.builtin.command: >-
+    gs_install \
+      -X {{ og_upload_path }}/cluster_config.xml \
+      --gsinit-parameter="--pwpasswd={{ og_db_pass }}" \
+      --gsinit-parameter="--locale={{ og_locale }}" \
+      --time-out {{ (og_all_nodes | count) * 600 }}
+  changed_when: false
+  become_flags: "-i"
+  when: "not og_expansion"

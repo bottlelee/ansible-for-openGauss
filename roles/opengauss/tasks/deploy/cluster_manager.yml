@@ -1,29 +1,27 @@
-- name: Deploy CM into existing data cluster
+- name: Set CM facts
+  ansible.builtin.set_fact:
+    cm_nodes: "{{ (groups['opengauss_dn'] is defined) | ternary(groups['opengauss_dn'], '') | sort }}"
+    dn_nodes: "{{ (groups['opengauss_dn'] is defined) | ternary(groups['opengauss_dn'], '') | sort }}"
+    ep_nodes: ""
+    og_cm_enabled: true
+    og_expansion: false
+    og_preinstall: false
+
+- name: Root tasks
+  become_user: root
   block:
     - name: Import upload tasks
       ansible.builtin.import_tasks:
         file: upload.yml
-      become_user: root
-      # run_once: true
 
     - name: Get cm package name
       ansible.builtin.set_fact:
         cm_pkg: "{{ file }}"
-      loop: "{{ og_upload.files | default([]) }}"
+      loop: "{{ og_upload.files }}"
       loop_control:
         loop_var: file
       when:
         - "'cm.tar.gz' in file"
-      # run_once: true
-
-    - name: "Change file permission of {{ cm_pkg }}"
-      ansible.builtin.file:
-        path: "{{ og_upload_path }}/{{ cm_pkg }}"
-        owner: "{{ og_user }}"
-        group: "{{ og_group }}"
-        mode: "0640"
-      become_user: root
-      # run_once: true
 
     - name: Create some paths
       ansible.builtin.file:
@@ -33,7 +31,6 @@
         group: "{{ og_group }}"
         mode: "0750"
       delegate_to: "{{ item.1 }}"
-      become_user: root
       with_nested:
         - ['{{ og_log_path }}/omm/cm/cm_server', '{{ og_log_path }}/omm/cm/cm_agent']
         - "{{ og_all_nodes }}"
@@ -44,155 +41,94 @@
       ansible.builtin.file:
         path: "/opt/openGauss/install/om/{{ cm_pkg }}"
         state: absent
-      become_user: root
       loop: "{{ og_all_nodes }}"
       delegate_to: "{{ item }}"
 
-    # 这里需要建一个假的定时任务，包含 'om_monitor'。后续 cm_install 时会检查，否则失败。
-    - name: Fake an om_monitor cron job before install
-      ansible.builtin.cron:
-        name: openGauss om monitor
-        special_time: yearly
-        job: "{{ og_home }}/install/app/bin/om_monitor"
-      loop: "{{ dn_nodes }}"
-      loop_control:
-        loop_var: node
-        label: "{{ hostvars[node]['node_ip'] }}"
-      delegate_to: "{{ hostvars[node]['node_ip'] }}"
+    - name: Import pre tasks
+      ansible.builtin.import_tasks:
+        file: deploy/cluster_pre_tasks.yml
 
-    - name: "Create cluster_config.xml in local path '{{ inventory_dir }}'"
-      ansible.builtin.template:
-        src: "{{ item }}"
-        dest: "{{ inventory_dir }}/cluster_config.xml"
+    - name: Import config generate tasks
+      ansible.builtin.import_tasks:
+        file: deploy/cluster_config_generate.yml
+
+    - name: "Change file permission of {{ cm_pkg }}"
+      ansible.builtin.file:
+        path: "{{ og_upload_path }}/{{ cm_pkg }}"
         owner: "{{ og_user }}"
         group: "{{ og_group }}"
-        mode: "0644"
-        lstrip_blocks: true
-      with_first_found:
-        - "{{ inventory_dir }}/templates/cluster_config.xml.j2"
-        - "cluster_config.xml.j2"
-      delegate_to: localhost
-      become: false
-      # run_once: true
+        mode: "0640"
 
-    - name: "Upload cluster_config.xml to {{ og_upload_path }}"
-      ansible.builtin.copy:
-        src: "{{ inventory_dir }}/cluster_config.xml"
-        dest: "{{ og_upload_path }}/"
-        owner: "{{ og_user }}"
-        group: "{{ og_group }}"
-        mode: "0644"
-        backup: true
+# 这里需要建一个假的定时任务，包含 'om_monitor'。后续 cm_install 时会检查替换，否则失败。
+- name: Fake an om_monitor cron job before install
+  ansible.builtin.cron:
+    name: openGauss om monitor
+    special_time: yearly
+    job: "{{ og_home }}/install/app/bin/om_monitor"
+  loop: "{{ dn_nodes }}"
+  loop_control:
+    loop_var: node
+    label: "{{ hostvars[node]['node_ip'] }}"
+  delegate_to: "{{ hostvars[node]['node_ip'] }}"
 
-    - name: Step 1 | Switchover once to avoid 'Term of primary is invalid or not maximal' error
+# 集群增加 CM 工具
+- name: Deploy CM tool
+  when:
+    - "groups['opengauss_cm'] is not defined"
+    - "og_cm_enabled"
+  block:
+    - name: Switchover on a standby node
       ansible.builtin.command:
         gs_ctl switchover -D {{ og_data_path }}/dn
       changed_when: false
-      loop: "{{ dn_nodes }}"
+      loop: "{{ dn_nodes | select('search', 'Standby') }}"
       loop_control:
         loop_var: node
+        extended: true
+      when: "ansible_loop.index == 1"
       delegate_to: "{{ hostvars[node]['node_ip'] }}"
-      when: "'Standby' in node"
-      register: switchover_status
-      until: "switchover_status is succeeded"
-      retries: 9
-      delay: 5
 
-    # - name: Select a standby node and the primary node
-    #   ansible.builtin.set_fact:
-    #     standby_nodes: >-
-    #       {% for node in dn_nodes if 'Standby' in node %}
-    #       {{ hostvars[node]['node_ip'] }}
-    #       {% endfor %}
-    #     primary_nodes: >-
-    #       {% for node in dn_nodes if 'Primary' in node %}
-    #       {{ hostvars[node]['node_ip'] }}
-    #       {% endfor %}
-
-    - name: "Step 2 | Switchover back to {{ og_master }}"
+    - name: Switchover back to primary node
       ansible.builtin.command:
         gs_ctl switchover -D {{ og_data_path }}/dn
       changed_when: false
-      loop: "{{ dn_nodes }}"
+      loop: "{{ dn_nodes | select('search', 'Primary') }}"
       loop_control:
         loop_var: node
       delegate_to: "{{ hostvars[node]['node_ip'] }}"
-      when: "'Primary' in node"
-      register: switchover_status
-      until: "switchover_status is succeeded"
-      retries: 9
-      delay: 5
 
-    # - name: Stop all nodes
-    #   ansible.builtin.command:
-    #     gs_om -t stop
-    #   changed_when: false
+    - name: Start any stopped nodes
+      ansible.builtin.command:
+        gs_om -t start
+      changed_when: false
 
-    - name: Install CM
+    - name: Import 'wait_for_started' tasks
+      ansible.builtin.import_tasks:
+        file: wait_for_started.yml
+
+    - name: Tips
+      ansible.builtin.debug:
+        msg: |
+          Adding CM tool into cluster.
+          Please wait...
+
+    - name: Deploy CM tool
       ansible.builtin.expect:
         command: "./cm_install -X {{ og_upload_path }}/cluster_config.xml --cmpkg {{ og_upload_path }}/{{ cm_pkg }}"
         responses:
           (?i)password: "{{ og_ca_pass }}"
         chdir: "{{ og_home }}/install/app/tool/cm_tool"
+        timeout: "{{ (dn_nodes | count) * 300 }}"
       changed_when: false
       register: cm_install
       until:
         - "cm_install.stdout is defined"
         - "'CM exists' in cm_install.stdout"
       retries: 3
-      timeout: 300
-      ignore_errors: true
-      become_user: "{{ og_user }}"
+      #ignore_errors: true
+      failed_when: "cm_install.rc == 999"
 
-  rescue:
-    - name: Install pexpect
-      ansible.builtin.package:
-        name: "{{ python_name }}-pexpect"
-      become_user: root
-
-    - name: Repeat tasks
-      ansible.builtin.include_tasks:
-        file: cluster_manager.yml
-
-  always:
-    # - name: Debug
-    #   ansible.builtin.debug:
-    #     var: cm_install
-
-    # - name: Start the primary data node
-    #   ansible.builtin.command:
-    #     "gs_om -t start -h {{ hostvars[node]['node_name'] }}"
-    #   loop: "{{ dn_nodes }}"
-    #   loop_control:
-    #     loop_var: node
-    #   when: "'Primary' in node"
-    #   changed_when: false
-
-    # - name: Wait for primary node started
-    #   ansible.builtin.wait_for:
-    #     host: "{{ hostvars[node]['node_ip'] }}"
-    #     port: "{{ og_cluster_config.db_port }}"
-    #     timeout: "600"
-    #   loop: "{{ dn_nodes }}"
-    #   loop_control:
-    #     loop_var: node
-    #   when: "'Primary' in node"
-    #   changed_when: false
-
-    # - name: Start the rest of data nodes
-    #   ansible.builtin.command:
-    #     "gs_om -t start -h {{ hostvars[node]['node_name'] }}"
-    #   loop: "{{ dn_nodes }}"
-    #   loop_control:
-    #     loop_var: node
-    #   when: "'Primary' not in node"
-    #   changed_when: false
-
-    - name: Wait for the cluster started
+    - name: Refresh cluster config
       ansible.builtin.command:
-        "gs_om -t status"
-      register: gs_status
-      until: "'Normal' in gs_status.stdout"
-      retries: 30
-      delay: 10
+        gs_om -t refreshconf
       changed_when: false
