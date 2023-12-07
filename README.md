@@ -12,7 +12,7 @@
 # 已适配的系统
 
 * x86_64
-  * CentOS 7.6
+  * CentOS 7.6/7.9
   * openEuler 20.03 LTS SP3
 
 # 已适配的 openGauss 版本
@@ -66,8 +66,13 @@
 
 # 使用指南
 
-* [快速开始](docs/00-how-to.md)，适合熟悉 Ansible 的同学。
-* [创建 Ansible 容器](docs/01-ansible-in-docker.md)，使用 docker 快速搭建一个可以运行本项目的 ansible 环境，降低对操作系统的依赖。
+```
+git clone --depth 1 https://gitee.com/opengauss/ansible-for-opengauss.git
+
+cd ansible-for-opengauss
+```
+
+* [创建容器](docs/01-ansible-in-docker.md)，使用 docker 快速搭建一个可以运行本项目的 ansible 环境，降低对操作系统的依赖。
 * [详细配置](docs/02-pre-set.md)
 * [开始部署](docs/03-deploy.md)
 * [节点扩容](docs/04-expansion.md)
@@ -75,7 +80,8 @@
 # 更新日志
 
 * 2023-11-10：优化流程，解决扩容难点，可直接从单节点扩容到多节点。
-* 2023-10-26: 大量修复和优化，可完美实现从单点部署，到逐步扩容为 1 主 4 备 4 级联的架构。
+* 2023-10-26: 大量修复和优化，可完美实现从单点部署，到扩容为 1 主 4 备 4 级联的架构。
+
   ```
   已测试的扩容场景如下
 
