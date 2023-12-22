@@ -56,14 +56,14 @@ opengauss_home: /opt/openGauss
 
 ```
 # 安装目录
-opengauss_home: /openGauss
+opengauss_home: /opengauss_data
 ```
 
 我们的脚本会通过 `/workdir/roles/pre-tasks/tasks/vars_combine.yml` 的处理后，替换默认变量并放置在 `combined_vars` 数组内。
 
 ```
 combined_vars:
-  opengauss_home: /openGauss
+  opengauss_home: /opengauss_data
 ```
 
 整个部署任务，都会大量使用 combined_vars 里的变量。
