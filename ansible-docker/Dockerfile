@@ -2,8 +2,6 @@ FROM alpine
 LABEL Creator="haibin.l@linkingcloud.cn"
 ARG TIMEZONE="Asia/Shanghai"
 
-ADD ssh_config /root/.ssh/config
-
 RUN addgroup dbgrp \
   && adduser -D -G dbgrp omm \
   && sed -i 's/dl-cdn.alpinelinux.org/mirrors.cloud.tencent.com/g' /etc/apk/repositories \
@@ -14,6 +12,10 @@ RUN addgroup dbgrp \
     inetutils-telnet \
   && ln -sf /usr/share/zoneinfo/$TIMEZONE /etc/localtime \
   && sed -i 's/\/bin\/ash/\/usr\/bin\/fish/g' /etc/passwd
+
+ADD ssh_config /root/.ssh/config
+
+ADD ssh_config /omm/.ssh/config
 
 USER omm
 
