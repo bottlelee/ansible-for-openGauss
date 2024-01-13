@@ -15,7 +15,7 @@ RUN addgroup dbgrp \
 
 ADD ssh_config /root/.ssh/config
 
-ADD ssh_config /omm/.ssh/config
+ADD ssh_config /home/omm/.ssh/config
 
 USER omm
 
