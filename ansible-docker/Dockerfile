@@ -13,9 +13,10 @@ RUN addgroup dbgrp \
   && ln -sf /usr/share/zoneinfo/$TIMEZONE /etc/localtime \
   && sed -i 's/\/bin\/ash/\/usr\/bin\/fish/g' /etc/passwd
 
-ADD ssh_config /root/.ssh/config
-
 ADD ssh_config /home/omm/.ssh/config
+
+RUN chown -R omm:dbgrp /home/omm \
+  && deluser root || echo "User 'root' has been deleted."
 
 USER omm
 
@@ -23,5 +24,3 @@ RUN byobu-select-backend tmux \
   && byobu-ctrl-a screen \
   && byobu-enable \
   && fish -c "alias pansible='ansible-playbook' && funcsave pansible"
-
-

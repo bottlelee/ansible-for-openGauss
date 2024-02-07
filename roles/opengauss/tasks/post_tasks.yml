@@ -30,6 +30,10 @@
         msg: |
           {{ cluster_status.stdout_lines }}
 
+    - name: Pause to review
+      pause:
+        seconds: 10
+
     - name: "Create report.md in {{ inventory_dir }}"
       ansible.builtin.template:
         src: report.md.j2
