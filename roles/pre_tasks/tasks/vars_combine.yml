@@ -34,7 +34,6 @@
         role_vars: "{{ lookup('vars', 'temp_role_vars') }}"
         group_vars: "{{ lookup('vars', 'temp_group_vars') }}"
 
-
     # - debug:
     #     msg: "{{ combined_vars }}"
 
