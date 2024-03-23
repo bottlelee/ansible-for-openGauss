@@ -1,9 +1,0 @@
-- name: Install dependencies
-  apt:
-    name:
-      - libaio-dev
-      - flex
-      - bison
-      - patch
-      - readline-common
-      - python3-pexpect

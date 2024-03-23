@@ -88,6 +88,10 @@
       when: "ansible_loop.index == 1"
       delegate_to: "{{ hostvars[node]['node_ip'] }}"
 
+    - name: Import 'wait_for_started' tasks
+      ansible.builtin.import_tasks:
+        file: wait_for_started.yml
+
     - name: Switchover back to primary node
       ansible.builtin.command:
         gs_ctl switchover -D {{ og_data_path }}/dn
@@ -114,7 +118,7 @@
 
     - name: Deploy CM tool
       ansible.builtin.expect:
-        command: "./cm_install -X {{ og_upload_path }}/cluster_config.xml --cmpkg {{ og_upload_path }}/{{ cm_pkg }}"
+        command: "python3 cm_install -X {{ og_upload_path }}/cluster_config.xml --cmpkg {{ og_upload_path }}/{{ cm_pkg }}"
         responses:
           (?i)password: "{{ og_ca_pass }}"
         chdir: "{{ og_home }}/install/app/tool/cm_tool"
@@ -128,6 +132,11 @@
       failed_when: 
         - "cm_install.rc is defined"
         - "cm_install.rc == 999"
+
+    - name: Print CM install log
+      debug:
+        msg: "{{ cm_install.stderr_lines }}"
+      when: "cm_install.stderr_lines is defined"
 
     - name: Refresh cluster config
       ansible.builtin.command:

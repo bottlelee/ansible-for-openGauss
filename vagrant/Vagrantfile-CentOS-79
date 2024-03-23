@@ -13,7 +13,7 @@ Vagrant.configure("2") do |config|
   config.vm.guest = "centos"
 
   # How many vm do you want?
-  N = 5
+  N = 9
 
   config.vm.provider "virtualbox" do |vb|
     vb.memory = 1024 * 16
