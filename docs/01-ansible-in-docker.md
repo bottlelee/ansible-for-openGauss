@@ -9,8 +9,17 @@ docker-compose up -d --build
 
 # 进入容器环境
 
+
+Default user is 'omm' in the docker container
+
 ```
 docker exec -it ansible-for-opengauss byobu
+```
+
+If you using 'root' account and you pull the source under any directory that not allowed for other users, use command instead
+
+```
+docker exec -it -uroot ansible-for-opengauss byobu
 ```
 
 # 声明
