@@ -10,13 +10,19 @@ docker-compose up -d --build
 # 进入容器环境
 
 
-Default user is 'omm' in the docker container
+容器内默认使用 omm 用户，id 1001。因此克隆下来的目录需首先改变所属权，`/path/to/ansible-for-opengauss` 改为实际的目录。这个改动同样适用于非 root 用户但 id 不是 1001 的情况。
+
+```
+chown -R 1001:1001 /path/to/ansible-for-opengauss
+```
+
+进入容器
 
 ```
 docker exec -it ansible-for-opengauss byobu
 ```
 
-If you using 'root' account and you pull the source under any directory that not allowed for other users, use command instead
+如果你使用的是 root 账号，请指定以 root 用户进入容器内。
 
 ```
 docker exec -it -uroot ansible-for-opengauss byobu
