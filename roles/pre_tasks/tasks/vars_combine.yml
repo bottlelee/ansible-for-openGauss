@@ -9,6 +9,15 @@
     # - debug:
     #     msg: "{{ temp_role_vars }}"
 
+    - name: Init assembled group vars files
+      file:
+        path: "{{ inventory_dir }}/assembled_vars/{{ group_names | hash('md5') }}.yml"
+        state: touch
+        mode: "0644"
+      delegate_to: localhost
+      become: false
+      run_once: true
+
     - name: Assembling group vars files
       ansible.builtin.assemble:
         src: "{{ inventory_dir }}/group_vars/"
